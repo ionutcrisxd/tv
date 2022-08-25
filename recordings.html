@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Recordings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <div class="row col-lg-2 col-md-3 col-sm-4 col-xs-12">
+            <select id="filter" class="custom-select my-1 mr-sm-2" data-container="body">
+                <option value="all">All Recordings</option>
+                <option value="ready">All Recordings (List)</option>
+                <option value="recent">Recent Recordings</option>
+                <option value="failed">Failed Recordings</option>
+            </select>
+        </div>
+
+        <hr />
+        <recordings_grid ref="recordingsGrid" list="all" view="grid"></recordings_grid>
+        <show_message_modal ref="messageModal"></show_message_modal>
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/recordings-grid.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        window.addEventListener("load", function (event) {
+            $("#nav-recordings").addClass("active");
+            checkSession();
+
+            // handle filter changes
+            $('select').on('change', function () {
+                var filter = $('#filter').val()
+                app.__vue__.$refs.recordingsGrid.showFilteredList(filter);
+            });
+        });
+
+        function coverLoadError(image) {
+            image.onerror = "";
+            image.src = "placeholder-landscape.jpg";
+            return true;
+        }
+    </script>
+</body>
+</html>

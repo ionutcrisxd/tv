@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Video On Demand</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap-select.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="vendor/datetime/tempusdominus-bootstrap-4.min.css" />
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <div class="row pad-left pad-right-extra">
+            <select id="filter" class="custom-select col-lg-2 col-md-3 col-sm-4 col-xs-12" data-container="body">
+                <option value="loading">...Loading...</option>
+            </select>
+        </div>
+
+        <hr />
+        <vod_grid ref="vodGrid"></vod_grid>
+        <show_message_modal ref="messageModal"></show_message_modal>
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/vod-grid.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="vendor/bootstrap/bootstrap-select.min.js"></script>
+    <script src="vendor/datetime/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        var advancedMode = false;
+
+        window.addEventListener("load", function (event) {
+            $("#nav-vod").addClass("active");
+            checkSession();
+
+            window.eventBus = new Vue();
+            window.eventBus.$on('editRecurring', function (data) {
+                editRecurring(data);
+            });
+
+            $('#filter').on('change', function () {
+                var vodGrid = app.__vue__.$refs.vodGrid;
+                vodGrid.showNamedList($('#filter').val());                
+            });
+
+            var url = 'services/service?method=vod.groups&format=json';
+            $.getJSON(url, function (data) {
+                $('#filter').empty();
+                data.forEach(function (directory) {
+                    $('#filter').append("<option value='" + directory + "'>" + directory + "</option>");
+                });
+                if (data.length > 0) {
+                    var vodGrid = app.__vue__.$refs.vodGrid;
+                    vodGrid.showNamedList($('#filter').val());   
+                }
+            });
+
+        });
+
+        function coverLoadError(image) {
+            image.onerror = "";
+            image.src = "placeholder-landscape.jpg";
+            return true;
+        }
+
+        function showMessage(title, body) {
+            var messageModal = app.__vue__.$refs.messageModal;
+            messageModal.showMessage(title, body);
+        }
+
+    </script>
+</body>
+</html>

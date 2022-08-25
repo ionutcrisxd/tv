@@ -1,0 +1,189 @@
+﻿@font-face {
+    font-family: dotsfont;
+    src: url('vendor/dotsfont/dotsfont.eot');
+    src: url('vendor/dotsfont/dotsfont.eot?#iefix') format('embedded-opentype'), url('vendor/dotsfont/dotsfont.woff') format('woff'), url('vendor/dotsfont/dotsfont.ttf') format('truetype'), url('vendor/dotsfont/dotsfont.svg#dotsfontregular') format('svg');
+}
+
+body {
+    padding-top: 53px;
+}
+
+.container-fluid {
+    width: 100%;
+    padding-right: 0px;
+    padding-left: 0px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.content {
+    padding: 10px;
+    padding-left: 210px;
+    padding-top: 25px;
+    width: 100% !important;
+    height: auto;
+}
+
+.wrapper {
+    display: flex;
+    align-items: stretch;
+}
+
+#sidebar {
+    position: fixed;
+    top: 54px;
+    left: 0px;    
+    min-width: 200px;
+    max-width: 200px;
+}
+
+#sidebar.active {
+    margin-left: -200px;
+}
+
+#sidebar {
+    min-width: 200px;
+    max-width: 200px;
+    min-height: calc(100vh - 54px);
+}
+
+a[data-toggle="collapse"] {
+    position: relative;
+}
+
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -200px;
+    }
+
+    #sidebar.active {
+        margin-left: 0;
+    }
+}
+
+p {
+    font-size: 1.1em;
+    font-weight: 300;
+    line-height: 1.7em;
+    color: #999;
+}
+
+a, a:hover, a:focus {
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+#sidebar {    
+    transition: all 0.3s;
+}
+
+#sidebar .sidebar-header {
+    padding: 20px;
+    background: #6d7fcc;
+}
+
+#sidebar ul.components {
+    padding: 20px 0;
+}
+
+#sidebar ul p {
+    color: #fff;
+    padding: 10px;
+}
+
+#sidebar ul li a {
+    padding: 10px;
+    font-size: 1.1em;
+    display: block;
+}
+
+#sidebar ul li a:hover {
+    color: #7386D5;
+    background: #fff;
+}
+
+#sidebar ul li.active > a, a[aria-expanded="true"] {
+    color: #fff;
+    background: #6d7fcc;
+}
+
+ul ul a {
+    font-size: 0.9em !important;
+    padding-left: 30px !important;
+    background: #6d7fcc;
+}
+
+
+@media (min-width: 1200px) {
+    .modal-xlg {
+        width: 90%;
+    }
+}
+
+.big-checkbox-padding {
+    padding-top: 1px;
+    padding-left: 15px;
+    padding-right: 6px;
+}
+
+.form-check-label {
+    padding-top: 3px;
+    padding-left: 5px;
+}
+
+.form-row {
+    padding-bottom: 10px;
+}
+
+.no-margin {
+    margin-left: 0px !important;
+}
+
+.pad-right {
+    margin-top: 10px !important;
+    margin-right: 20px !important;
+}
+
+.custom-file .form-inline label {
+    /* text-align:right; */
+    text-align: left;
+    background-color: #ffa;
+}
+
+.fake-pwd {
+    font-family: dotsfont;
+    font-size: x-small;
+    -webkit-text-security: disc !important;    
+}
+
+.pad-top {
+    padding-top: 10px;    
+}
+
+.user-item {
+    margin-left: 20px;    
+    width: 140px;
+    height: 100px;
+    background: #222222;
+    border-radius: 6px;
+}
+
+.delete-top-right {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    top: 4px;
+    right: 4px;
+}
+
+
+.caption-btm {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.donationStatus {
+    height: 40px;
+}

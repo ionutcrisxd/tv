@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Help</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <h6>Frequently Asked Questions</h6>
+
+        <div id="accordion">
+        </div>        
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+
+    <script src="components/page-header.js"></script>    
+    <script src="js/utility.js"></script>
+
+    <script>
+        window.addEventListener("load", function (event) {            
+            $("#nav-help").addClass("active");
+            checkSession();
+
+
+            // load FAQ data from faq.json
+            var url = 'faq.json';
+            $.getJSON(url, function (items) {
+                // add each item
+                for (i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    
+                    var html = '<div class="card"><div class="card-header" id="heading' + i + '"><h5 class="mb-0"><button class="btn btn-link" data-toggle="collapse" data-target="#collapse' + i + '" aria-expanded="true" aria-controls="collapse' + i + '">' + item.question + '</button></h5></div>';
+                    html += '<div id="collapse' + i + '" class="collapse" aria-labelledby="heading' + i + '" data-parent="#accordion"><div class="card-body">';                    
+                    html += item.answer;
+                    html += '</div></div></div>';
+
+                    $("#accordion").append(html);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

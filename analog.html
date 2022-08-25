@@ -1,0 +1,372 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>HDPVR Device Setup</title>
+
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body class="settings-body">
+    <div class="container-fluid" id="app">
+        <div class="row">
+            <div class="col-6">
+                <h6 class="pad-top-extra">Analog Channel List</h6>
+            </div>
+            <div class="col-6">
+                <div class="float-right">
+                    <button id="updateChannelsBtn" type="button" class="btn btn-secondary d-none">Update Channels</button>
+                    <button id="importChannelsBtn" type="button" class="btn btn-primary">Import Channels</button>
+                </div>
+            </div>
+        </div>
+        <hr />
+        <device_channels_grid ref="channelList"></device_channels_grid>
+        <add_sd_lineup_modal ref="addSDModal"></add_sd_lineup_modal>
+        <add_xmltv_lineup_modal ref="addXMLTVModal"></add_xmltv_lineup_modal>
+        <update_epg_modal ref="updateEPGModal"></update_epg_modal>
+        <show_message_modal ref="messageModal"></show_message_modal>
+
+        <div id="importChannels" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Import Channels</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <form class="form-inline well col-10">
+                                <select id="videoSource" class="custom-select my-1 mr-sm-2" data-container="body">
+                                    <option value='loading'>...loading...</option>
+                                </select>
+                                <div class="form-group">
+                                    <select id="epgSource" class="custom-select my-1 mr-sm-2" data-container="body">
+                                        <option value='loading'>...loading...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <input class="form-control" type="text" id="blasterExecutable" placeholder="Blaster Executable Path">
+                                    <input class="form-control" type="text" id="blasterArguments" placeholder="{channel}">
+                                </div>
+                            </form>
+                            <div class="form-group col-2">
+                                <button id="doImportBtn" type="button" class="btn btn-primary float-right">Import</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <span id="status" class="text-primary"></span>
+                                <span id="error" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <hr />
+                        <div id="scan-results">
+                            <select_channels_list ref="selectList"></select_channels_list>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <p class="text-secondary">No changes will be made until you hit 'Save'. When you do hit 'Save' any new channels you have ticked will be added. Any existing channels will still be there. </p>
+                        <button id="saveChannelsBtn" type="button" class="btn btn-light">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="updateChannels" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Update Channels</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <form class="form-inline well col-10">
+                                <select id="updateVideoSource" class="custom-select my-1 mr-sm-2" data-container="body">
+                                    <option value='loading'>...loading...</option>
+                                </select>
+                                <div class="form-group">
+                                    <input class="form-control" type="text" id="updateBlasterExecutable" placeholder="Blaster Executable Path">
+                                    <input class="form-control" type="text" id="updateBlasterArguments" placeholder="{channel}">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <p class="text-secondary">Hitting Save will change the input and blaster settings for the selected. If no channels are selected, the change will be applied to all channels.</p>
+                        <button id="saveUpdatedChannelsBtn" type="button" class="btn btn-light" data-dismiss="modal">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/device-channels-grid.js"></script>
+    <script src="components/select-channels-list.js"></script>
+    <script src="components/add-sd-lineup-modal.js"></script>
+    <script src="components/add-xmltv-lineup-modal.js"></script>
+    <script src="components/update-epg-modal.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        var id = 0;
+        var timer = 0;
+        var scannedChannels = []
+        var selectedChannels = [];
+
+        window.addEventListener("load", function (event) {            
+            // load channels four this source
+            var url = document.location.search;
+            var sourceId = /id=([^&]+)/.exec(url)[1];
+            var channelList = app.__vue__.$refs.channelList;
+            channelList.reloadForSource(sourceId);
+
+            $('#epgSource').on('change', function () {
+                var epgSource = $('#epgSource').val()
+                if (epgSource == "addsd") {
+                    $('#importChannels').modal('hide');
+                    var modal = app.__vue__.$refs.addSDModal;
+                    modal.show();
+                }
+                else if (epgSource == "addxmltv") {
+                    $('#importChannels').modal('hide');
+                    var modal = app.__vue__.$refs.addXMLTVModal;
+                    modal.show();
+                }
+            });
+
+            $("#updateChannelsBtn").click(function () {
+                // get list of appropriate inputs
+                var startScanURL = "services/service?method=setting.scan.options&format=json&source_id=" + sourceId;
+                $.getJSON(startScanURL, function (result) {
+                    if (result.stat == "ok") {                        
+                        result.parameters.forEach(function (parameter) {
+                            if (parameter.name == "video_source") {
+                                $("#updateVideoSource").empty();
+                                var inputs = parameter.list;
+                                for (k = 0; k < inputs.length; k++) {
+                                    var input = inputs[k];
+                                    $("#updateVideoSource").append("<option value='" + input + "'>" + input + "</option>");
+                                }
+                            }
+                        });
+
+                        var lineups = result.parameters[0].list;
+
+                    } else {
+                        console.log("failed");
+                    }
+                });
+
+                $('#updateChannels').modal();
+            });
+
+
+            $("#importChannelsBtn").click(function () {
+                // start with empty channel list
+                scannedChannels = []
+                var component = app.__vue__.$refs.selectList;
+                component.showChannels(scannedChannels);
+
+                // start with empty epg source list, but load and populate when ready
+                var url = 'services/service?method=setting.epg.sources&format=json';
+                $.getJSON(url, function (sources) {
+                    $('#epgSource').empty();
+                    for (var i = 0, len = sources.length; i < len; i++) {
+                        var source = sources[i];
+
+                        // only use sources that make sense for hdpvr import
+                        if (source.id.startsWith("xmltv") || source.id.startsWith("schedulesdirect")) {
+                            $('#epgSource').append("<option value='" + source.id + "'>" + source.name + "</option>");
+                        }
+                    }
+                    console.log("got EPG sources");
+                    // add additionals...
+                    $('#epgSource').append("<option value='addsd'>...Add Schedules Direct Lineup....</option>");
+                    $('#epgSource').append("<option value='addxmltv'>...Add XMLTV Lineup....</option>");
+                });
+
+                // get list of appropriate inputs
+                var startScanURL = "services/service?method=setting.scan.options&format=json&source_id=" + sourceId;
+                $.getJSON(startScanURL, function (result) {
+                    if (result.stat == "ok") {
+                        $("#sdLineups").empty();
+                        result.parameters.forEach(function (parameter) {
+                            if (parameter.name == "sd_lineup") {
+                                var lineups = parameter.list;
+                                for (k = 0; k < lineups.length; k++) {
+                                    var lineup = lineups[k];
+                                    $("#sdLineups").append("<option value='" + lineup + "'>" + lineup + "</option>");
+                                }
+                                $("#sdLineups").append("<option value='manage'>...Manage Lineups...</option>");
+                            }
+                            else if (parameter.name == "video_source") {
+                                $("#videoSource").empty();
+                                var inputs = parameter.list;
+                                for (k = 0; k < inputs.length; k++) {
+                                    var input = inputs[k];
+                                    $("#videoSource").append("<option value='" + input + "'>" + input + "</option>");
+                                }
+                            }
+                        });
+
+                        var lineups = result.parameters[0].list;
+
+                    } else {
+                        console.log("failed");
+                    }
+                });
+
+                // show import channels popup
+                $("#saveChannelsBtn").hide();
+                $('#importChannels').modal()
+            });
+
+            $('#epgSource').on('change', function () {
+                var epgSource = $('#epgSource').val()
+                if (epgSource == 'addxmltv') {
+                    console.log("add xmltv file");
+                }
+                else if (epgSource == 'addsd') {
+                    console.log("add sd lineup");
+                }
+            });
+
+            $("#doImportBtn").click(function () {
+
+                var startScanURL = "services/service?method=setting.scan.start&format=json&source_id=" + sourceId
+                // video source
+                startScanURL += "&video_source=" + encodeURIComponent($("#videoSource").val());
+
+                // epg source
+                startScanURL += "&epg=" + encodeURIComponent($("#epgSource").val());
+
+                // add blaster
+                startScanURL += "&blaster=" + encodeURIComponent($("#blasterExecutable").val());
+                startScanURL += "&args=" + encodeURIComponent($("#blasterArguments").val());
+
+                // kick off import
+                $.getJSON(startScanURL, function (result) {
+                    if (result.stat == "ok") {
+                        console.log("ok");
+                        timer = setInterval(checkStatus, 500);
+                    } else {
+                        console.log("failed");
+                    }
+                });
+            });
+
+            $("#saveUpdatedChannelsBtn").click(function () {
+
+                var startScanURL = "services/service?method=setting.hdpvr.update&format=json&source_id=" + sourceId
+                // video source
+                startScanURL += "&video_source=" + encodeURIComponent($("#updateVideoSource").val());
+
+                // add blaster
+                startScanURL += "&blaster=" + encodeURIComponent($("#updateBlasterExecutable").val());
+                startScanURL += "&args=" + encodeURIComponent($("#updateBlasterArguments").val());
+
+                var channelList = app.__vue__.$refs.channelList;
+                if (selectedChannels.length > 0) {
+                    startScanURL += "&channel_id="
+                    selectedChannels.forEach(function (channel) {
+                        startScanURL += channel.channelId + ",";
+                    });
+                }
+
+                // kick off import
+                $.getJSON(startScanURL, function (result) {
+                    // reload channel list                    
+                    channelList.reloadForSource(sourceId);
+                });
+            });
+
+            // user has clicked 'save' button
+            $("#saveChannelsBtn").click(function () {
+                // get the list of selected channels
+                var component = app.__vue__.$refs.selectList;
+                var selectedChannels = component.getSelectedChannels();
+
+                // convert to json
+                var json = JSON.stringify(selectedChannels);
+
+                // save the selected channels...
+                $.ajax({
+                    url: 'services/service?method=setting.scan.save&format=json',
+                    type: 'POST',
+                    data: json,
+                    contentType: 'application/json',
+                    success: function () {
+                        // close the modal
+                        $('#importChannels').modal('toggle');
+                        var channelList = app.__vue__.$refs.channelList;
+                        channelList.reloadForSource(sourceId);
+
+                        promptForEPGUpdate();
+                    },
+                    error: function () {
+                        // show user the error
+                        alert('error!');
+                    }
+                })
+            });
+
+        });
+
+        function reloadEPGSources() {
+
+        }
+
+        function loadedChannels(channels) {
+            if (channels.length == 0) {
+                $("#updateChannelsBtn").addClass("d-none");
+            } else {
+                $("#updateChannelsBtn").removeClass("d-none");
+            }
+        }
+
+        function checkStatus() {
+            // regularly check the status of the scan
+            var statusURL = "services/service?method=setting.scan.status&format=json";
+            $.getJSON(statusURL, function (result) {
+                $('#status').text(result.status);
+                // add any channels found
+                if (result.channels != null) {
+                    scannedChannels = scannedChannels.concat(result.channels);
+                    var component = app.__vue__.$refs.selectList;
+                    component.showChannels(result.channels);
+                }
+                // have we reached the end of the scan?
+                if (result.complete) {
+                    // scan complete
+                    clearInterval(timer);
+                    $('#status').text("");
+                    $("#saveChannelsBtn").show();
+                }
+            });
+        }
+
+        function onSelectedChannelChange(channels) {
+            selectedChannels = channels;
+            console.log("selected channels changed");
+        }
+    </script>
+</body>
+</html>

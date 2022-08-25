@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Initial Setup</title>
+
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <h3>Welcome to NextPVR</h3>
+        <p>You're using a fresh install of NextPVR. On this page we want to make it easy to do the most basic steps required to get NextPVR running.</p>
+        <hr />
+
+        <h6>Device Setup</h6>
+        <p>
+            Below is the list of device NextPVR detected in your machine. If you can't see your device listed, make sure you have drivers installed for the device.
+            Please click on a device to setup the channels available from that device.
+        </p>
+        <devices_grid></devices_grid>
+        <hr />
+
+        <h6>Recording Directory</h6>
+        <p>
+            Please enter the name of the directory you'd want NextPVR to record to.
+        </p>
+        <hr />
+
+        <h6>Helpful Information</h6>
+        <p>
+            <span class="text-light">How else can I watch my live tv and recordings?</span>&nbsp;Some of the most common ways to watch include: NextPVR.exe (on Windows), NLite, Kodi, VLC, or
+            the NextPVR applications on the iOS / Android app stores. For more information see <a href="http://nextpvr.com/download.html">http://nextpvr.com/download.html</a>
+        </p>
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/js-cookie/2.1.2/js.cookie.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.4/Chart.min.js"></script>
+
+    <script src="components/page-header.js"></script>
+    <script src="components/devices-grid.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        window.addEventListener("load", function (event) {
+            checkSession();
+        });
+    </script>
+</body>
+</html>

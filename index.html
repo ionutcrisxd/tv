@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>NextPVR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <h4>Available Storage</h4>
+        <disk_space ref="diskSpace"></disk_space>
+        <br/>
+
+        <h4>Recent Recordings</h4>
+        <recordings_grid ref="recentRecordings" list="recent" view="grid"></recordings_grid>
+
+        <h4>Upcoming Recordings</h4>
+        <recordings_grid ref="upcomingRecordings" list="pendingSummary" view="list"></recordings_grid>
+
+        <show_message_modal ref="messageModal"></show_message_modal>
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="js/js.cookie.min.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="js/Chart.min.js"></script>
+
+    <script src="components/page-header.js"></script>
+    <script src="components/recordings-grid.js"></script>
+    <script src="components/disk-space.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+
+        if (getParameterByName("reload", "") == "true") {
+            location.reload(true);
+        }
+
+        window.addEventListener("load", function (event) {
+
+            checkSession();
+
+            window.eventBus = new Vue();
+            window.eventBus.$on('recordingDeleted', function (data) {
+                // react on the event somehow
+                refresh();
+            });
+
+            setInterval(refresh, 60000);
+        });
+
+        function refresh() {
+            // update disk space
+            app.__vue__.$refs.diskSpace.reload();
+
+            // update recordings
+            app.__vue__.$refs.recentRecordings.reload();
+            app.__vue__.$refs.upcomingRecordings.reload();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function coverLoadError(image) {
+            image.onerror = "";
+            image.src = "placeholder-landscape.jpg";
+            return true;
+        }
+    </script>
+</body>
+</html>

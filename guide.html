@@ -1,0 +1,631 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="guide.css">
+    <link rel="stylesheet" href="genre.css">
+    <link rel="stylesheet" href="scroll.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap-select.min.css">
+    <link rel="stylesheet" href="vendor/datetime/tempusdominus-bootstrap-4.min.css" />
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <span id="pageTitle"><strong>Guide</strong></span>
+
+        <!-- header row -->
+        <div id="guide-header" class="bg-primary" style="width: 100%; max-width: 100%; z-index: 3; ">
+            <div id="header-body" style="width: 100%; max-height: 57px; z-index: 3; ">
+                <div style="float: left; width: 15%; margin-bottom: 0px;">
+                    <select id="date-selector" class="custom-select bg-primary" data-container="body">
+                        <option value="0">Today</option>
+                        <option value="1">Tomorrow</option>
+                    </select>
+                </div>
+                <div id="timeline-time" class="bg-primary" style="float: left; width: 85%; overflow-x:scroll; overflow-y:hidden; ">
+                    <div id="timeContainer" class="timeline">
+                    </div>
+                </div>
+                <br style="clear: left;" />
+            </div>
+        </div>
+
+        <!-- main body of guide, showing channel list and listings for each channel -->
+        <div id="main-guide-body" style="width: 100%; clear: left; z-index: 1;">
+            <div style="float: left; width: 15%; ">
+                <div id="channelsColumn">
+                </div>
+            </div>
+            <div id="listings-column-container" style="float: left; width: 85%; overflow-x:hidden; overflow-y:hidden; height:auto;">
+                <div id="listingsColumn" style="position: relative;">
+                </div>
+            </div>
+            <br style="clear: left;" />
+        </div>
+
+        <listing_details_modal ref="detailsModal"></listing_details_modal>
+        <advanced_record_modal ref="advancedRecordModal"></advanced_record_modal>
+        <manual_record_modal ref="manualRecordModal"></manual_record_modal>
+        <show_message_modal ref="messageModal"></show_message_modal>
+
+        <footer class="footer">
+            <div class="row">
+                <div id="guide-footer" class="bg-primary" style="width: 100%; max-width: 100%; clear: left">
+                    <div style="float: left; width: 15%; margin-bottom: 0px; padding-left: 15px;">
+                        <select id="group-selector" class="custom-select bg-primary" data-container="body">
+                            <option value="0">All Channels</option>
+                        </select>
+                    </div>
+                    <div id="timeline-time-footer" class="bg-primary" style="float: left; width: 85%; overflow-x:scroll; overflow-y:hidden; height:auto;">
+                        <div id="timeContainer2" class="timeline">
+                        </div>
+                    </div>
+                    <br style="clear: left;" />
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap-select.min.js"></script>
+    <script src="vendor/datetime/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="js/listing-helper.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/listing-details-modal.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="components/advanced-record-modal.js"></script>
+    <script src="components/manual-record-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+
+        var channels = [];
+        var selectedDate = new Date();
+        var currentlyVisible = [];
+        var showNewInGuide = false;
+        var listingLookup = [];
+        var pendingRecordingLookup = [];
+        var currentShowLookup = {};
+        var dayNumber = 0;
+        var showGenreColors = false;
+        var recordingsLastUpdated = 0;
+        var recordingTimerId = 0;
+        var guideScrollPosition = 0;
+        var fakeID = -1;
+
+        window.addEventListener("load", function (event) {
+
+            $("#nav-guide").addClass("active");
+            checkSession();
+
+            // make sure theme looks ok
+            var backgroundColor = $("body").css("background-color");
+            document.body.style.setProperty('--seperator-color', backgroundColor);
+
+            // try to set a reasonable color for the now-airing shows
+            if (lightOrDark(backgroundColor) == 'light') {
+                document.body.style.setProperty('--now-airing-background', 'Gainsboro');
+            }
+
+            //let touchDevice = /iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+            let touchDevice = /iPad|iPhone|iPod/.test(navigator.platform);
+            if (touchDevice) {
+                $("#listings-column-container").attr('style', 'float: left; width: 85%; overflow-x:scroll; overflow-y:hidden; height:auto;');
+            }
+
+            // on a mac, we need to force the scroll bars
+            if (!areScrollbarsVisible()) {
+                document.body.classList.add('force-show-scrollbars');
+            }
+
+
+            // tweaks for default theme
+            //var bgPrimary = $(".timeline").css();
+            //var style = dumpCSSText($(".timeline"))
+            //$(".timeline").css("background-color", "#0094ff");
+            //$("#date-selector").css("background-color", "#0094ff");
+            //$("#guide-header").css("background-color", "#0094ff");
+            /*
+
+            var defaultTheme = true;
+            if (defaultTheme) {
+                $('#timeContainer').removeClass("bg-primary");
+                $('#timeContainer2').removeClass("bg-primary");
+
+                $('#timeline-left-footer').removeClass("bg-primary");
+                $('#date-selector').removeClass("bg-primary");
+                $('#selectedDate2').removeClass("bg-primary");
+                $('#guide-footer').removeClass("bg-primary");
+
+                $('#timeContainer').addClass("cyborg-primary");
+                $('#timeContainer2').addClass("cyborg-primary");
+
+                $('#header-body').addClass("cyborg-primary");
+                $('#timeline-left-footer').addClass("cyborg-primary");
+                $('#date-selector').addClass("cyborg-primary");
+                $('#selectedDate2').addClass("cyborg-primary");
+            }
+              */
+
+
+            //var bgPrimary = $(".bg-dark").css("background-color");
+            //$(".timeline").css("color", "yellow !important");
+
+
+            var today = new Date();
+            selectedDate = new Date();
+            if (dayNumber > 0) {
+                selectedDate.setDate(today.getDate() + dayNumber);
+            }
+
+            $.getJSON('services/service?method=setting.get&key=/Settings/General/ShowNewInGuide', function (data) {
+                if (data.value == "true") {
+                    showNewInGuide = true;
+                }
+            });
+            $.getJSON('services/service?method=setting.get&key=/Settings/General/ShowGenreColors', function (data) {
+                if (data.value == "true") {
+                    showGenreColors = true;
+                }
+            });
+
+
+            loadTimeline();
+            loadChannels();
+            loadRecordings();
+            loadDateSelector();
+            loadGroupSelector();
+
+            updateNowIndicatorLocation();
+
+            $(document).on('click', '#pageTitle', function () {
+                reloadRecordings();
+            });
+
+            // handle user clicking on tv listing
+            $(document).on('click', '.guide-listing', function () {
+                // find id of listing
+                var listingID = this.id.replace("listing-", "");
+                var listing = listingLookup[listingID];
+                if (listing != null) {
+                    var component = app.__vue__.$refs.detailsModal;
+                    component.show(listing);
+                }
+            });
+
+            // scroll to current time
+            if (dayNumber == 0) {
+                showNow();
+            }
+
+            if (touchDevice == false) {
+                // sync with top scroll bar
+                $("#timeline-time").scroll(function () {
+                    var left = $("#timeline-time").scrollLeft();
+                    console.log("scroll " + left);
+                    $("#listings-column-container").scrollLeft($("#timeline-time").scrollLeft());
+                    $("#timeline-time-footer").scrollLeft($("#timeline-time").scrollLeft());
+                });
+
+                // sync with bottom scroll bar
+                $("#timeline-time-footer").scroll(function () {
+                    $("#listings-column-container").scrollLeft($("#timeline-time-footer").scrollLeft());
+                    $("#timeline-time").scrollLeft($("#timeline-time-footer").scrollLeft());
+                });
+            }
+
+            // sync time lines for touch devices that support scrolling of the main listing container (like ipad etc)
+            $("#listings-column-container").scroll(function () {
+                $("#timeline-time").scrollLeft($("#listings-column-container").scrollLeft());
+                $("#timeline-time-footer").scrollLeft($("#listings-column-container").scrollLeft());
+                if (currentlyVisible.length > 0) {
+                    guideScrollPosition = $("#listings-column-container").scrollLeft();
+                    fixRelocatedPadding();
+                }
+            });
+
+            // regularly poll to check if there have been updates that need to be displayed
+            recordingTimerId = setInterval(function () { pollForRecordingChanges(); }, 15000);
+        });
+
+        function showMessage(title, body) {
+            var messageModal = app.__vue__.$refs.messageModal;
+            messageModal.showMessage(title, body);
+        }
+
+        function areScrollbarsVisible() {
+            var scrollableElem = document.createElement('div'),
+                innerElem = document.createElement('div');
+            scrollableElem.style.width = '30px';
+            scrollableElem.style.height = '30px';
+            scrollableElem.style.overflow = 'scroll';
+            scrollableElem.style.borderWidth = '0';
+            innerElem.style.width = '30px';
+            innerElem.style.height = '60px';
+            scrollableElem.appendChild(innerElem);
+            document.body.appendChild(scrollableElem); // Elements only have width if they're in the layout
+            var diff = scrollableElem.offsetWidth - scrollableElem.clientWidth;
+            document.body.removeChild(scrollableElem);
+            return diff > 0;
+        }
+
+        function showNow() {
+            // scroll to current time
+            if (dayNumber == 0) {
+                var currentTimeInSeconds = ((new Date()).getHours() * 60);
+
+                guideScrollPosition = (currentTimeInSeconds * 6);
+
+                $("#timeline-time").scrollLeft((currentTimeInSeconds * 6));
+                $('#timeline-time').trigger('scroll');
+
+                $("#listings-column-container").scrollLeft((currentTimeInSeconds * 6));
+                $('#listings-column-container').trigger('scroll');
+
+                $("#timeline-time-footer").scrollLeft((currentTimeInSeconds * 6));
+                $('#timeline-time-footer').trigger('scroll');
+            }
+        }
+
+
+        $(window).on('resize scroll', function () {
+            var header = document.getElementById("guide-header");
+            var sticky = header.offsetTop;
+
+            var viewPortWidth = $(window).width();
+
+            var offset = $(window).scrollTop();
+            console.log("offset: " + offset);
+
+            $(".now-indicator").css({ "top": (offset - 50) + "px" });
+
+            // stop timeline header from scrolling off the top of the page
+            if ($(window).scrollTop() >= 54) {
+                $("#guide-header").css('position', 'fixed');
+                $("#guide-header").css('top', '54px');
+                $("#guide-header").css('left', '15px');
+                $("#main-guide-body").css('margin-top', '58px');
+                $("#guide-header").css('width', '' + (viewPortWidth - 30) + 'px');
+            } else {
+                $("#guide-header").css('width', '100%');
+                $("#guide-header").css('position', 'static');
+                $("#main-guide-body").css('margin-top', '0px');
+                $("#guide-header").css('width', '100%');
+            }
+
+            // viewport has changed, so check fi any channels are visible
+            detectVisibleChannels();
+        });
+
+        // populate the timelines at top and bottom of the screen
+        function loadTimeline() {
+
+            var date = new Date(Date.UTC(2012, 11, 12, 3, 0, 0));
+            var dateString = date.toLocaleTimeString();
+            var militaryTime = true;
+            //apparently toLocaleTimeString() has a bug in Chrome. toString() however returns 12/24 hour formats. If one of two contains AM/PM execute 12 hour coding.
+            if (dateString.match(/am|pm/i) || date.toString().match(/am|pm/i)) {
+                //12 hour clock
+                militaryTime = false;
+            }
+
+            var tHead = $('#timeContainer');
+            var tFoot = $('#timeContainer2');
+            tHead.empty();
+            tFoot.empty();
+
+            var midNight = new Date((new Date()).setHours(0, 0, 0, 0));
+            midNight.setDate(midNight.getDate() + dayNumber)
+
+            for (var h = 0; h < 24; h++) {
+
+                var t1 = new Date(midNight.getTime() + (h * 3600000));
+
+                console.log("" + h + ": " + t1.toLocaleTimeString())
+
+                var formattedT1 = t1.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                if (militaryTime)
+                    formattedT1 = "" + t1.getHours() + ":00";
+                var timeEntry00 = '<div style="float: left; width: 180px; height: 35px;display: inline-block;">' + formattedT1 + '</div>';
+                tHead.append(timeEntry00);
+                tFoot.append(timeEntry00);
+
+
+                var t2 = new Date(midNight.getTime() + (h * 3600000) + 1800000);
+
+                console.log("" + h + ": " + t2.toLocaleTimeString())
+
+                var formattedT2 = t2.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                if (militaryTime)
+                    formattedT2 = "" + t2.getHours() + ":30";
+                var timeEntry30 = '<div style="float: left; width: 180px; height: 35px;display: inline-block;">' + formattedT2 + '</div>';
+                tHead.append(timeEntry30);
+                tFoot.append(timeEntry30);
+            }
+        }
+
+        function loadDateSelector() {
+            $("#date-selector").attr('title', selectedDate.toDateString());
+            for (var day = 2; day < 14; day++) {
+                var dateOption = new Date(selectedDate);
+                dateOption.setDate(dateOption.getDate() + day);
+                $('#date-selector').append('<option value="' + day + '">' + dateOption.toDateString() + '</option>');
+            }
+
+            $('#date-selector').on('change', function () {
+                // determine which day was selected
+                dayNumber = $('#date-selector').val()
+                var ms = new Date().getTime() + (86400000 * dayNumber);
+                selectedDate = new Date(ms);
+
+                // remove focus
+                $("#date-selector").blur();
+
+                // fix timeline (in case of daylight savings changes)
+                loadTimeline();
+
+                // get rid of old listings
+                $("#listingsColumn").empty();
+                channels.forEach(function (element) {
+                    element.loaded = false;
+                    $("#listingsColumn").append("<div id='channelListings-" + element.channelId + "' class='row guide-listing-row'></div>");
+                });
+
+                // kick off loading of listings for the visible channels
+                detectVisibleChannels();
+            });
+
+            /*
+            $('#selectedDate').selectpicker('refresh');
+            $('#selectedDate').selectpicker('render');*/
+        }
+
+        function loadGroupSelector() {
+
+            var url = 'services/service?method=channel.groups&format=json';
+            $.getJSON(url, function (data) {
+                // check if user had any preference for the selected channel group
+                var preferredChannelGroup = localStorage.getItem('preferredChannelGroup');
+
+                // populate the list of channel groups, and select the users preference
+                var channelGroups = $("#group-selector");
+                channelGroups.empty();
+                for (i = 0; i < data.groups.length; i++) {
+                    var group = data.groups[i];
+                    channelGroups.append("<option value='" + group + "'>" + group + "</option>");
+                    if (group == preferredChannelGroup) {
+                        channelGroups.prop('selectedIndex', i);
+                    }
+                }
+            });
+
+            $('#group-selector').on('change', function () {
+                // save selected channel group to a cookie
+                var preferredChannelGroup = $("#group-selector").val();
+                localStorage.setItem('preferredChannelGroup', preferredChannelGroup);
+
+                // kick off loading of listings for the visible channels
+                loadChannels()
+            });
+        }
+
+        // load channels down the left of the guide
+        function loadChannels() {
+            $("#channelsColumn").empty();
+            $("#listingsColumn").empty();
+
+            // add now indicator
+            if (dayNumber == 0) {
+                $("#listingsColumn").append("<div class='now-indicator'></div>")
+            }
+
+            var url = 'services/service?method=channel.list&format=json';
+            var preferredChannelGroup = localStorage.getItem('preferredChannelGroup');
+            if (preferredChannelGroup != null) {
+                url += "&group_id=" + encodeURIComponent(preferredChannelGroup);
+            }
+            $.getJSON(url, function (data) {
+                // setup the channel header and listing container for each channel
+                channels = data.channels;
+                channels.forEach(function (element) {
+                    element.loaded = false;
+                    var extra = "";
+                    if (element.channelIcon) {
+                        extra = "<div class='float-right guide-icon-container'><img class='guide-icon' src=\"service?method=channel.icon&channel_id=" + element.channelId + "\"></div>";
+                    }
+                    $("#channelsColumn").append("<div class='row bg-light full-width text-dark guide-channel-name'><div class='float-left nowrap'><b>" + element.channelNumberFormated + " - " + element.channelName + "</b></div>" + extra + "</div>");
+                    $("#listingsColumn").append("<div id='channelListings-" + element.channelId + "' class='row guide-listing-row'></div>");
+                });
+
+                // load listings for the visible channels
+                detectVisibleChannels();
+
+                // scroll to current time
+                if (dayNumber == 0) {
+                    showNow();
+                }
+            });
+        }
+
+        function fixRelocatedPadding() {
+            if (dayNumber == 0) {
+                currentlyVisible.forEach(function (channel) {
+                    if (channel.hasOwnProperty("relocated") && channel.relocated != null) {
+                        /*
+                        var currentTime = (new Date()).getTime() / 1000;
+                        var startDate = selectedDate;
+                        startDate.setHours(0, 0, 0, 0); // last midnight
+                        var startTime = startDate.getTime() / 1000;
+
+                        var listing = channel.now;
+                        var s = Math.round((listing.start - startTime) / 60);
+                        if (s < 0)
+                            s = 0;
+                        var e = Math.round((listing.end - startTime) / 60);
+                        if (e > (60 * 60))
+                            e = (60 * 60);
+
+                        var w = ((e - s) * 6);
+                        var o = (s * 6);
+
+                        // work around to ensure current show names are visible
+                        var cut = (guideScrollPosition - o);
+                        if (cut > 0) {
+                            var padding = cut;
+                            var node = '#listing-' + listing.id;
+                            $(node).css({ 'padding-left': padding + 'px' });
+                        }*/
+                        var node = '#listing-' + channel.relocated.id;
+                        $(node).css({ 'padding-left': '5px' });
+                        channel.relocated = null;
+                    }
+                });
+            }
+        }
+
+
+        // detected which channels are newly visible, so their listings can be loaded
+        function detectVisibleChannels() {
+            currentlyVisible.length = 0;
+
+            var viewPortTop = $(window).scrollTop();
+            var viewPortBottom = $(window).scrollTop() + (window.innerHeight + 420);
+            var nowSeconds = ((new Date).getTime() / 1000);
+            channels.forEach(function (channel) {
+                if (channel.loaded) {
+                    var currentListing = currentShowLookup[channel.channelId];
+                    if (currentListing != null) {
+                        if (currentListing.end < nowSeconds) {
+                            channel.loaded = false;
+                        }
+                    }
+                }
+
+                var id = "#channelListings-" + channel.channelId;
+                var scrollLeft = $("#timeline-time").scrollLeft()
+                var elementTop = $(id).offset().top;
+                var elementBotton = $(id).offset().top + $(id).outerHeight();
+                if ((viewPortBottom >= elementTop) && (viewPortTop <= elementBotton)) {
+                    // if this channel is visible for the first time...load listings
+                    if (channel.loaded == false) {
+                        console.log(channel.channelName + " is visible");
+                        loadListingsForChannel(channel, guideScrollPosition);
+                    }
+                    currentlyVisible.push(channel);
+                }
+            });
+        }
+
+        function reloadRecordings() {
+            console.log("reload recordings callback...");
+            loadRecordings();
+        }
+
+
+        function updateNowIndicatorLocation() {
+            // make sure the 'now' indicator is in the right location
+            if (dayNumber == 0) {
+                var currentTime = (new Date()).getTime() / 1000;
+                var startDate = selectedDate;
+                startDate.setHours(0, 0, 0, 0); // last midnight
+                var seconds = (currentTime - (startDate.getTime() / 1000));
+                var minutes = (seconds / 60);
+                var location = minutes * 6;
+                //console.log("minutes=" + minutes);
+                $(".now-indicator").css({ "left": location + "px" });
+            }
+        }
+
+        function pollForRecordingChanges() {
+            // check if there have been any changes to the recording schedule
+            $.ajax({
+                url: 'service?method=recording.lastupdated&format=json',
+                type: 'GET',
+                contentType: 'application/json',
+                success: function (data) {
+                    if (recordingsLastUpdated != 0 && recordingsLastUpdated != data.last_update) {
+                        loadRecordings();
+                    }
+                    recordingsLastUpdated = data.last_update;
+                },
+                error: function (error) {
+                    clearInterval(recordingTimerId);
+                }
+            });
+
+            // we need to regularly make sure the now indicator is positioned correctly
+            updateNowIndicatorLocation();
+
+            // check if we need to change the current show highlighting
+            detectVisibleChannels();
+        }
+
+        function loadRecordings() {
+            var self = this;
+
+            // removed the scheduled indicator from all existing listings
+            pendingRecordingLookup.forEach(function (recording) {
+                if (recording.hasOwnProperty('epgEventId')) {
+                    var listingOID = recording.epgEventId;
+                    var listing = listingLookup[listingOID];
+                    if (listing != null) {
+                        delete listing.recording_id;
+                    }
+                }
+            });
+            $(".guide-listing").removeClass("guide-listing-scheduled");
+
+            // reset the list
+            pendingRecordingLookup = [];
+
+            // reload
+            var url = 'services/service?method=recording.list&filter=pending&format=json&random=' + Math.random();
+            $.getJSON(url, function (data) {
+                pendingRecordingLookup = data.recordings;
+                // check if any of these recordings are already load and in the guide (if so, make them as scheduled)
+                pendingRecordingLookup.forEach(function (recording) {
+                    if (recording.hasOwnProperty('epgEventId')) {
+                        var listingOID = recording.epgEventId;
+                        var listing = self.listingLookup[listingOID];
+                        if (listing != null) {
+                            listing.recording_id = recording.id;
+                            if (recording.recurring == true) {
+                                listing.recurring_id = recording.recurringParent;
+                            }
+                            console.log('found recording...added class');
+                            var listingID = "#listing-" + listingOID;
+                            $(listingID).addClass("guide-listing-scheduled");
+                        }
+                    }
+                });
+            });
+
+            recordingsLastUpdated = 0;
+        }
+
+        function dumpCSSText(element) {
+            var s = '';
+            var o = getComputedStyle(element);
+            for (var i = 0; i < o.length; i++) {
+                s += o[i] + ':' + o.getPropertyValue(o[i]) + ';';
+            }
+            return s;
+        }
+
+
+
+    </script>
+</body>
+</html>

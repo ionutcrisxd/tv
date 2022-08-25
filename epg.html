@@ -1,0 +1,361 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Guide Setup</title>
+
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="settings.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body class="settings-body">
+    <div class="container-fluid" id="app">
+
+        <h5>EPG Sources</h5>
+        <p>Shown below is the list of guide sources known to NextPVR</p>
+        <epg_sources ref="epgSources"></epg_sources>
+        <button id="sdAddLineupButton" class='btn btn-secondary'>
+            <i class="fas fa-plus-circle"></i> Add SD Channel Lineup
+        </button>
+        <button id="xmltvAddLineupButton" class='btn btn-secondary'>
+            <i class="fas fa-plus-circle"></i> Add XMLTV Channel Lineup
+        </button>
+        <button id="downloadIconsButton" class='btn btn-secondary'>
+            <i class="fas fa-cloud-download-alt"></i> Download Channel Icons
+        </button>
+
+
+
+        <hr />
+        <h5>Automatic EPG Update</h5>
+        <p>Below are the times that EPG will be automatically updated. eg. "03:00" to update at 3am</p>
+        <form class="col-lg-3 col-md-4" onsubmit="return false;">
+            <div class="form-row">
+                <label class="col-sm-4 col-form-label" for="name">Times:</label>
+                <input type="text" id="epgUpdateTime" class="form-control col-8" placeholder="No automatic EPG update">
+            </div>
+        </form>
+
+        <hr />
+
+        <h5>Schedules Direct</h5>
+        <p>If you have a <a href="http://www.schedulesdirect.org/">Schedules Direct</a> account, please enter your login details here. </p>
+
+        <form class="col-lg-3 col-md-4">
+            <div class="form-row">
+                <label class="col-sm-4 col-form-label" for="name">Username:</label>
+                <input type="text" id="schedulesDirectUsername" class="form-control col-8" placeholder="SD Username" autocomplete="off" autofocus>
+            </div>
+            <div class="form-row">
+                <label class="col-sm-4 col-form-label" for="name">Password:</label>
+                <input id="schedulesDirectPassword" class="form-control col-8 fake-pwd" placeholder="SD Password" autocomplete="off">
+            </div>
+            <div class="form-row">
+                <label class="col-sm-4 col-form-label" for="name"></label>
+                <button id="sdLogin" type="button" class="btn btn-secondary btn-sm col-8 d-none">Login and Refresh EPG sources</button>
+            </div>
+        </form>
+
+
+        <div id="updateDVBEPGModal" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">DVB/ATSC EPG Setup</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-group">
+                            <div class="form-inline">
+                                <div class="col-md-12 form-group">
+                                    <label for="title" class="col-3 col-form-label">Seconds per freq:</label>
+                                    <input class="form-control col-3" type="number" min="10" max="120" value="60" id="secondsPerFrequency">
+                                </div>
+                            </div>
+                        </form>
+                        <hr />
+                        <div id="scan-results">
+                            <select_frequency_list ref="frequencyList"></select_frequency_list>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="saveEPGSettingsBtn" type="button" class="btn btn-light" data-dismiss="modal">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <update_epg_modal ref="updateEPGModal"></update_epg_modal>
+        <show_message_modal ref="messageModal"></show_message_modal>
+        <add_sd_lineup_modal ref="addSDModal"></add_sd_lineup_modal>
+        <add_xmltv_lineup_modal ref="addXMLTVModal"></add_xmltv_lineup_modal>
+    </div>
+
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/epg-sources.js"></script>
+    <script src="components/select-channels-list.js"></script>
+    <script src="components/update-epg-modal.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="components/add-sd-lineup-modal.js"></script>
+    <script src="components/add-xmltv-lineup-modal.js"></script>
+    <script src="components/select-frequency-list.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        var id = 0;
+        var timer = 0;
+        var scannedChannels = []
+        var regions = []
+
+        var settings = [
+            { textbox: '#epgUpdateTime', xpath: '/Settings/General/EPGUpdateTime', value: null }
+        ];
+
+        window.addEventListener("load", function (event) {
+            loadSettings();
+
+            window.eventBus = new Vue();
+            window.eventBus.$on('schedulesDirecMessage', function (data) {
+                //alert("Schedules Direct message: " + data);
+                showMessage("Schedules Direct", data);
+            });
+            window.eventBus.$on('editDVBEPG', function (data) {
+                editDVBEPG();
+            });
+
+            $("#downloadIconsButton").click(function () {
+                var iconsURL = "services/service?method=setting.icons";
+                // prefer icons that'll work on the current background
+                var backgroundColor = $("body").css("background-color");
+                iconsURL += "&background=" + lightOrDark(backgroundColor);
+                $.getJSON(iconsURL, function (result) {
+                    if (result.stat == "ok") {
+                        showMessage("Channel Icons", "NextPVR is now downloading channel icons. Your icons should be available in the guide in a few minutes. You may need to refresh your browser page for them to show up")
+                    } else {
+                        showMessage("Channel Icons", "Unexpected error downloading channel icons from Schedules Direct. Have you entered the correct username/password, and do you have mapped to Schedules Direct?")
+                    }
+                });
+            });
+
+            $("#sdAddLineupButton").click(function () {
+                var modal = app.__vue__.$refs.addSDModal;
+                modal.show(false);
+            });
+
+            $("#xmltvAddLineupButton").click(function () {
+                var modal = app.__vue__.$refs.addXMLTVModal;
+                modal.show(false);
+            });
+
+            $("#sdLogin").click(function () {
+                var url = 'services/service?method=setting.sd.login';
+                $.getJSON(url, function (data) {
+                    if (data.stat === 'ok') {
+                        $('#sdLogin').addClass('d-none');
+                    } else {
+                        showMessage("Login Failed", "Failed to login to Schedules Direct. Confirm you've entered your correct username and password, then try again. (" + data.msg + ")");
+                    }
+                    reloadEPGSources();
+                });
+            });
+
+
+
+            $('#schedulesDirectUsername').on('input', function (e) {
+                updateCredentials();
+            });
+
+            $('#schedulesDirectPassword').on('input', function (e) {
+                updateCredentials()
+            });
+
+            // request settings from server
+            var needed = [];
+            needed.push("/Settings/General/SchedulesDirectUsername");
+            needed.push("/Settings/General/SchedulesDirectPassword");
+            needed.push("/Settings/General/EPGScanSeconds");
+            var json = JSON.stringify(needed);
+            $.ajax({
+                url: 'services/service?method=setting.get&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log("got it: " + data.length);
+                    data.forEach(function (serverSetting) {
+                        if (serverSetting.xpath == "/Settings/General/SchedulesDirectUsername") {
+                            $('#schedulesDirectUsername').val(serverSetting.value);
+                        }
+                        else if (serverSetting.xpath == "/Settings/General/SchedulesDirectPassword") {
+                            $('#schedulesDirectPassword').val(serverSetting.value);
+                        }
+                        else if (serverSetting.xpath == "/Settings/General/EPGScanSeconds") {
+                            $('#secondsPerFrequency').val(serverSetting.value);                            
+                        }
+                    });
+                }
+            });
+
+            $('#saveEPGSettingsBtn').on('click', function () {
+                var value = $('#secondsPerFrequency').val()
+                var toSave = [];
+                toSave.push({ xpath: "/Settings/General/EPGScanSeconds", value: value });
+                // post save request to server
+                var json = JSON.stringify(toSave);
+                $.ajax({
+                    url: 'services/service?method=setting.set&format=json',
+                    type: 'POST',
+                    data: json,
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log("/Settings/General/EPGScanSeconds saved");
+                    },
+                    error: function (error) {
+                        // show user the error
+                        console.log("failed to save updated " + setting.xpath);
+                    }
+                })
+
+                // save frequencies
+                var frequencyList = app.__vue__.$refs.frequencyList;
+                frequencyList.save();
+
+                $('#updateDVBEPGModal').modal('hide');
+            });
+        });
+
+        function updateCredentials() {
+            var toSave = []
+            toSave.push({ xpath: "/Settings/General/SchedulesDirectUsername", value: $('#schedulesDirectUsername').val() });
+            toSave.push({ xpath: "/Settings/General/SchedulesDirectPassword", value: $('#schedulesDirectPassword').val() });
+
+            // post save request to server
+            var json = JSON.stringify(toSave);
+            $.ajax({
+                url: 'services/service?method=setting.set&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log("SD credentials updated");
+                    $('#sdLogin').removeClass('d-none');
+                },
+                error: function (error) {
+                    // show user the error
+                    console.log("failed to save updated SD credentials");
+                }
+            })
+        }
+
+        function loadSettings() {
+            // collect list of settings we need to request from server
+            var needed = [];
+            settings.forEach(function (setting) {
+                needed.push(setting.xpath);
+            });
+
+            // request settings from server
+            var json = JSON.stringify(needed);
+            $.ajax({
+                url: 'services/service?method=setting.get&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log("got it: " + data.length);
+                    data.forEach(function (serverSetting) {
+                        // find which control it relates to
+                        settings.forEach(function (setting) {
+
+                            if (serverSetting.xpath == setting.xpath) {
+                                // handle textboxes
+                                if (setting.hasOwnProperty('textbox')) {
+                                    $(setting.textbox).val(serverSetting.value);
+                                }
+                            }
+                        });
+                    });
+
+                    handleUpdates();
+                },
+                error: function (error) {
+                    // show user the error
+                    alert('Unexpected error loading settings!');
+                }
+            });
+        }
+
+        function updated(setting) {
+
+            var toSave = []
+
+            var xpath = setting.xpath;
+            var value = null;
+
+            // handle textboxes
+            if (setting.hasOwnProperty('textbox')) {
+                value = $(setting.textbox).val()
+            }
+
+            if (value != null) {
+                toSave.push({ xpath: xpath, value: value });
+            }
+
+            // post save request to server
+            var json = JSON.stringify(toSave);
+            $.ajax({
+                url: 'services/service?method=setting.set&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log(setting.xpath + " saved");
+                },
+                error: function (error) {
+                    // show user the error
+                    console.log("failed to save updated " + setting.xpath);
+                }
+            })
+        }
+
+
+        function handleUpdates() {
+            // collect list of settings we need to request from server
+            settings.forEach(function (setting) {
+
+                // handle textboxes
+                if (setting.hasOwnProperty('textbox')) {
+                    $(setting.textbox).change(function () {
+                        updated(setting);
+                    });
+                }
+
+            });
+        }
+
+        function editDVBEPG() {
+            console.log("edit DVB EPG");
+            $('#updateDVBEPGModal').modal()
+        }
+
+        function showMessage(title, body) {
+            var messageModal = app.__vue__.$refs.messageModal;
+            messageModal.showMessage(title, body);
+        }
+
+        function reloadEPGSources() {
+            var epgSources = app.__vue__.$refs.epgSources;
+            epgSources.reloadSources();
+        }
+    </script>
+</body>
+</html>

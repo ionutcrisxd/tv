@@ -1,0 +1,212 @@
+﻿:root {
+    --seperator-color: black;
+    --now-airing-background: #404040;
+}
+
+body {
+    padding-top: 85px !important;
+}
+
+#main-guide-body {
+    padding-bottom: 60px !important;
+}
+
+.guide-channel-name {    
+    position: relative;
+    height: 40px;
+    padding: 10px;
+    margin: 3px;    
+    border-right: 6px solid var(--seperator-color);
+    /*background-color: #373737 !important;*/
+}
+
+.guide-listing-row {
+    height: 40px;
+    /*background: #111111;*/
+    padding: 0px;
+    margin: 3px;
+    width: 8640px;
+    position: relative;
+    z-index: 1;
+}
+
+#listing-column {
+    width: 8640px;
+}
+
+.guide-listing {
+    height: 40px;
+    /*background: #222222;*/
+    padding: 10px;
+    margin: 0px;
+    border: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: inset 3px 0px 0px 0px var(--seperator-color);
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.guide-listing-airing-now {
+    background-color: var(--now-airing-background) !important;
+}
+
+div .guide-listing-scheduled {
+    color: white !important;
+    background-color: darkred !important;
+}
+
+div .guide-listing-recording {
+    color: white !important;
+    background-color: red !important;
+}
+
+div .guide-listing-ready {
+    background-color: green;
+}
+
+div .guide-listing-failed {
+    background-color: orange;
+}
+
+div .guide-listing-conflict {
+    background-color: orange;
+}
+
+.dateSelector {
+    background: #0094ff;
+    max-height: 50px;
+}
+
+.timeline {
+    height: 40px;
+    padding: 10px;
+    color: white;
+    width: 8640px;
+    margin-bottom: 0px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    z-index: 1001;        
+}
+
+#guide-header {
+    height: 57px;
+    display: block;
+    z-index: 300;    
+    color: white;
+    
+}
+
+.sticky {
+    position: fixed;
+    top: 54px;
+    padding-top: 0px;
+}
+
+#date-selector {    
+    color: white;
+    background-color: #0094ff;
+    height: 57px;
+}
+
+
+#group-selector {
+    color: white;
+    background-color: #0094ff;
+    height: 57px;
+}
+
+
+.thumbnail {
+    overflow: hidden;
+    margin: 7px;
+}
+
+.full-width {    
+    display: flex;
+    width: 100%;
+}
+
+.guide-icon {
+    /*background: #373737;*/
+    max-width: 45px;
+    max-height: 40px;
+}
+
+.guide-icon-container {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    bottom: 40px;
+    background-color: #373737 !important;
+    max-width: 45px;
+    max-height: 40px;
+}
+
+
+.footer {
+    left: 15px;
+    right: 15px;
+    bottom: 0px;
+    height: 57px; /* Set the fixed height of the footer here */
+    background-color: #0094ff;
+    overflow-x: hidden;
+    z-index: 2;
+    position: fixed;
+}
+
+
+
+.new-show {
+    background-image: url('images/new.png');
+    background-position: right;
+    background-repeat: no-repeat;
+    background-size: 40px 40px;
+}
+
+.season-premiere {
+    background-image: url('images/season-premiere.png');
+    background-position: right;
+    background-repeat: no-repeat;
+    background-size: 40px 40px;
+}
+
+.season-finale {
+    background-image: url('images/season-finale.png');
+    background-position: right;
+    background-repeat: no-repeat;
+    background-size: 40px 40px;
+}
+
+.series-premiere {
+    background-image: url('images/series-premiere.png');
+    background-position: right;
+    background-repeat: no-repeat;
+    background-size: 40px 40px;
+}
+
+.series-finale {
+    background-image: url('images/series-finale.png');
+    background-position: right;
+    background-repeat: no-repeat;
+    background-size: 40px 40px;
+}
+
+.airing-live {
+    background-image: url('images/live.png');
+    background-position: right;
+    background-repeat: no-repeat;
+    background-size: 40px 40px;
+}
+
+.now-indicator {
+    position: absolute;
+    background-color: yellow;
+    opacity: 0.3;
+    width: 2px;
+    top: 100px;
+    left: 200px;
+    height: 2000px;
+    z-index: 2;
+}

@@ -1,0 +1,287 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Digital Device Setup</title>
+
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body class="settings-body">
+    <div class="container-fluid" id="app">
+
+        <div class="row">
+            <div class="col-8">
+                <h6 id="deviceName" class="pad-top-extra"></h6>
+            </div>
+            <div class="col-3">
+                <button id="scanChannelsBtn" type="button" class="btn btn-primary float-right">Scan Channels</button>
+            </div>
+        </div>
+        <device_channels_grid ref="channelList"></device_channels_grid>
+
+        <div id="importChannels" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Scan SAT>IP Channels</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="form-group col-6">
+                                    <select id="scanType" class="form-control selectpicker2 btn-secondary" data-container="body">
+                                        <option value="one-sat">Single Satellite</option>
+                                        <option value="four-sat">4-way Switch</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-2">
+                                </div>
+                                <div class="form-group col-4">
+                                    <button id="doScanBtn" type="button" class="btn btn-primary float-right">Scan Channels</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-12">
+                                    <select id="satelliteA" class="form-control selectpicker2" data-container="body">
+                                        <option value="none">-None-</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="satelliteBRow" class="row">
+                                <div class="form-group col-12">
+                                    <select id="satelliteB" class="form-control selectpicker2" data-container="body">
+                                        <option value="none">-None-</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="satelliteCRow" class="row">
+                                <div class="form-group col-12">
+                                    <select id="satelliteC" class="form-control selectpicker2" data-container="body">
+                                        <option value="none">-None-</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="satelliteDRow" class="row">
+                                <div class="form-group col-12">
+                                    <select id="satelliteD" class="form-control selectpicker2" data-container="body">
+                                        <option value="none">-None-</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <span id="status" class="text-primary"></span>
+                                    <span id="error" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <div id="scan-results">
+                            <select_channels_list ref="selectList"></select_channels_list>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <p class="text-secondary">No changes will be made until you hit 'Save'. When you do hit 'Save' any new channels you have ticked will be added. Any existing channels will still be there. </p>
+                        <button id="saveChannelsBtn" type="button" class="btn btn-light">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <update_epg_modal ref="updateEPGModal"></update_epg_modal>
+        <show_message_modal ref="messageModal"></show_message_modal>
+    </div>
+
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/device-channels-grid.js"></script>
+    <script src="components/select-channels-list.js"></script>
+    <script src="components/update-epg-modal.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        var id = 0;
+        var timer = 0;
+        var scannedChannels = []
+        var satellites = []
+
+        window.addEventListener("load", function (event) {
+            // load channels four this source
+            var url = document.location.search;
+            var sourceId = /id=([^&]+)/.exec(url)[1];
+            var channelList = app.__vue__.$refs.channelList;
+            channelList.reloadForSource(sourceId);
+
+            var deviceName = getParameterByName("name", "Unknown device name");
+            $('#deviceName').text(deviceName);
+
+            $("#scanChannelsBtn").click(function () {
+                $('#status').text("");
+
+                $('#satelliteBRow').hide();
+                $('#satelliteCRow').hide();
+                $('#satelliteDRow').hide();
+
+                // load region options
+                if (satellites.length == 0) {
+                    var startOptionsURL = "services/service?method=setting.scan.options&format=json&source_id=" + sourceId;
+                    $.getJSON(startOptionsURL, function (result) {
+                        if (result.stat == "ok") {
+                            var regionList = $("#regionList");
+                            satellites = result.parameters[0].list;
+                            for (k = 0; k < satellites.length; k++) {
+                                var satellite = satellites[k];
+                                $("#satelliteA").append("<option value='" + satellite + "'>" + satellite + "</option>");
+                                $("#satelliteB").append("<option value='" + satellite + "'>" + satellite + "</option>");
+                                $("#satelliteC").append("<option value='" + satellite + "'>" + satellite + "</option>");
+                                $("#satelliteD").append("<option value='" + satellite + "'>" + satellite + "</option>");
+                            }
+
+                            $("#satelliteA")[0].selectedIndex = 0;
+                            $("#satelliteB")[0].selectedIndex = 0;
+                            $("#satelliteC")[0].selectedIndex = 0;
+                            $("#satelliteD")[0].selectedIndex = 0;
+                        } else {
+                            console.log("failed");
+                        }
+                    });
+                }
+
+
+                // start with empty channel list
+                scannedChannels = []
+                var component = app.__vue__.$refs.selectList;
+                component.showChannels(scannedChannels);
+                // show import channels popup
+                $("#saveChannelsBtn").hide();
+                $('#importChannels').modal()
+
+                parent.postMessage("resize", document.location);
+            });
+
+            // handle filter changes
+            $('#scanType').on('change', function () {
+                this.blur();
+                if (this.value == "four-sat") {
+                    $('#satelliteBRow').show();
+                    $('#satelliteCRow').show();
+                    $('#satelliteDRow').show();
+                } else {
+                    $('#satelliteBRow').hide();
+                    $('#satelliteCRow').hide();
+                    $('#satelliteDRow').hide();
+                }
+            });
+
+            $("#doScanBtn").click(function () {
+                // build scan url
+                $('#status').text("");
+                var scanType = encodeURIComponent($("#scanType").val());
+                var startScanURL = "services/service?method=setting.scan.start&format=json&source_id=" + sourceId + "&scanType=" + scanType
+                var satA = encodeURIComponent($("#satelliteA").val());
+                startScanURL += "&satA=" + satA;
+                if (scanType == "four-sat") {
+                    // lnb 2
+                    var satB = encodeURIComponent($("#satelliteB").val());
+                    startScanURL += "&satB=" + satB;
+
+                    // lnb 3
+                    var satC = encodeURIComponent($("#satelliteC").val());
+                    startScanURL += "&satC=" + satC;
+
+                    // lnb 4
+                    var satD = encodeURIComponent($("#satelliteD").val());
+                    startScanURL += "&satD=" + satD;
+                }
+
+                // start scan
+                $.getJSON(startScanURL, function (result) {
+                    if (result.stat == "ok") {
+                        console.log("ok");
+                        timer = setInterval(checkStatus, 500);
+                    } else {
+                        console.log("failed");
+                    }
+                });
+            });
+
+            // user has clicked 'save' button
+            $("#saveChannelsBtn").click(function () {
+                // get the list of selected channels
+                var component = app.__vue__.$refs.selectList;
+                var selectedChannels = component.getSelectedChannels();
+
+                // convert to json
+                var json = JSON.stringify(selectedChannels);
+
+                // save the selected channels...
+                $.ajax({
+                    url: 'services/service?method=setting.scan.save&format=json',
+                    type: 'POST',
+                    data: json,
+                    contentType: 'application/json',
+                    success: function () {
+                        // close the modal
+                        $('#importChannels').modal('toggle');
+                        var channelList = app.__vue__.$refs.channelList;
+                        channelList.reloadForSource(sourceId);
+
+                        promptForEPGUpdate();
+                    },
+                    error: function () {
+                        // show user the error
+                        alert('error!');
+                    }
+                })
+            });
+
+            // force stop of scan if user closes modal before scan completes
+            $('#importChannels').on('hidden.bs.modal', function () {
+                if (timer != 0) {
+                    // no longer need status callbacks
+                    clearInterval(timer);
+                    timer = 0;
+                    // make sure backend has stopped scan
+                    var stopScanURL = "services/service?method=setting.scan.stop&format=json";
+                    $.getJSON(stopScanURL, function (result) {
+                        console.log("scan stopped");
+                    });
+                }
+            });            
+        });
+
+        function checkStatus() {
+            // regularly check the status of the scan
+            var statusURL = "services/service?method=setting.scan.status&format=json";
+            $.getJSON(statusURL, function (result) {
+                $('#status').text(result.status);
+                // add any channels found
+                if (result.channels != null && result.channels.length) {
+                    scannedChannels = scannedChannels.concat(result.channels);
+                    var component = app.__vue__.$refs.selectList;
+                    component.showChannels(result.channels);
+                }
+                // have we reached the end of the scan?
+                if (result.complete) {
+                    // scan complete
+                    clearInterval(timer);
+                    timer = 0;
+                    $("#saveChannelsBtn").show();
+                    //$('#status').text("");
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>

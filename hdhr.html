@@ -1,0 +1,250 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>HDHomeRun Device Setup</title>
+
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body class="settings-body">
+    <div class="container-fluid" id="app">
+        <div class="row">
+            <div class="col-6">
+                <h6 class="pad-top-extra">Device Channel List</h6>
+            </div>
+            <div class="col-6">
+                <button id="importChannelsBtn" type="button" class="btn btn-primary float-right">Scan Channels</button>
+            </div>
+        </div>
+        <hr />
+        <device_channels_grid ref="channelList" v-on:channel="doSomething()"></device_channels_grid>
+        <add_sd_lineup_modal ref="addSDModal"></add_sd_lineup_modal>
+        <add_xmltv_lineup_modal ref="addXMLTVModal"></add_xmltv_lineup_modal>
+
+        <div id="importChannels" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Scan Channels</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-group">
+                            <div class="row pad-row">
+                                <div class="form-group col-12">
+                                    By default, channels from an HDHomeRun will have no guide data. When scanning the device for channels,
+                                    you can optionally associate the channels with guide data from Schedules Direct or XMLTV.
+                                </div>
+                            </div>
+                            <div class="form-inline">
+                                <div class="col-md-12 form-group">
+                                    <label for="title" class="col-1 col-form-label">Guide:</label>
+                                    <select id="epgSource" class="custom-select col-9 form-control" data-container="body">
+                                        <option value='loading'>...loading...</option>
+                                    </select>
+                                    <button id="doImportBtn" type="button" class="btn btn-primary float-right col-2 form-control">Scan</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="form-inline">
+                            <div class="col-12">
+                                <span id="status" class="text-primary"></span>
+                                <span id="error" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <hr />
+                        <div id="scan-results">
+                            <select_channels_list ref="selectList"></select_channels_list>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <p class="text-secondary">No changes will be made until you hit 'Save'. When you do hit 'Save' any new channels you have ticked will be added. Any existing channels will still be there. </p>
+                        <button id="saveChannelsBtn" type="button" class="btn btn-light">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <update_epg_modal ref="updateEPGModal"></update_epg_modal>
+        <show_message_modal ref="messageModal"></show_message_modal>
+    </div>
+
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/device-channels-grid.js"></script>
+    <script src="components/select-channels-list.js"></script>
+    <script src="components/add-sd-lineup-modal.js"></script>
+    <script src="components/add-xmltv-lineup-modal.js"></script>
+    <script src="components/update-epg-modal.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        var sourceId = 0;
+        var timer = 0;
+        var scannedChannels = []
+
+        window.addEventListener("load", function (event) {
+            // load channels four this source
+            var url = document.location.search;
+            sourceId = /id=([^&]+)/.exec(url)[1];
+            var channelList = app.__vue__.$refs.channelList;            
+            channelList.reloadForSource(sourceId);
+
+            var deviceName = getParameterByName("name", "Unknown device name");
+            $('#deviceName').text(deviceName);
+
+            // user has selected "...add sd lineup..." etc
+            $('#epgSource').on('change', function () {
+                var epgSource = $('#epgSource').val()
+                if (epgSource == "addsd") {
+                    $('#importChannels').modal('hide');
+                    var modal = app.__vue__.$refs.addSDModal;
+                    modal.show();
+                }
+                else if (epgSource == "addxmltv") {
+                    $('#importChannels').modal('hide');
+                    var modal = app.__vue__.$refs.addXMLTVModal;
+                    modal.show();
+                }
+            });
+
+            // user has clicked the 'Import Channels'
+            $("#importChannelsBtn").click(function () {
+                showImport();
+            });
+
+            // user has clicked the 'Import' button on the modal popup
+            $("#doImportBtn").click(function () {
+
+                // base scan url...
+                var startScanURL = "services/service?method=setting.scan.start&format=json&source_id=" + sourceId;
+
+                // add epg source
+                var selectedEPGSource = $("#epgSource").val();
+                startScanURL += "&epg=" + encodeURIComponent(selectedEPGSource);
+
+                // kick off scan/import
+                $.getJSON(startScanURL, function (result) {
+                    if (result.stat == "ok") {
+                        console.log("ok");
+                        timer = setInterval(checkStatus, 500);
+                    } else {
+                        $('#status').text("");
+                        $('#error').text(result.msg);
+                    }
+                });
+            });
+
+            // user has clicked 'save' button
+            $("#saveChannelsBtn").click(function () {
+                // get the list of selected channels
+                var component = app.__vue__.$refs.selectList;
+                var selectedChannels = component.getSelectedChannels();
+
+                // convert to json
+                var json = JSON.stringify(selectedChannels);
+
+                // save the selected channels...
+                $.ajax({
+                    url: 'services/service?method=setting.scan.save&format=json',
+                    type: 'POST',
+                    data: json,
+                    contentType: 'application/json',
+                    success: function () {
+                        // close the modal
+                        $('#importChannels').modal('toggle');
+                        var channelList = app.__vue__.$refs.channelList;
+                        channelList.reloadForSource(sourceId);
+
+                        var selectedEPGSource = $("#epgSource").val();
+                        if (selectedEPGSource != 'none') {
+                            promptForEPGUpdate();
+                        }
+                    },
+                    error: function () {
+                        // show user the error
+                        alert('error!');
+                    }
+                })
+            });
+
+        });
+
+        function showImport() {
+            // start with empty channel list
+            scannedChannels = []
+            var component = app.__vue__.$refs.selectList;
+            component.showChannels(scannedChannels);
+
+            // start with empty epg source list, but load and populate when ready
+            var url = 'services/service?method=setting.epg.sources&format=json&source_id=' + sourceId;
+            $.getJSON(url, function (sources) {
+                $('#epgSource').empty();
+
+                var dvbepg = false;
+                for (var i = 0, len = sources.length; i < len; i++) {
+                    var source = sources[i];
+                    $('#epgSource').append("<option value='" + source.id + "'>" + source.name + "</option>");
+                    if (source.id.startsWith("dvbepg")) {
+                        dvbepg = true;
+                        $('#epgSource').prop('selectedIndex', 1);
+                    }
+                }
+                
+                if (dvbepg) {
+
+                }
+
+                // add additionals...
+                $('#epgSource').append("<option value='addsd'>...Add Schedules Direct Lineup....</option>");
+                $('#epgSource').append("<option value='addxmltv'>...Add XMLTV Lineup....</option>");
+            });
+
+            // show import channels popup
+            $('#status').text("");
+            $('#error').text("");
+            $("#saveChannelsBtn").hide();
+            $('#importChannels').modal()
+        }
+
+        function checkStatus() {
+            // regularly check the status of the scan
+            var statusURL = "services/service?method=setting.scan.status&format=json";
+            $.getJSON(statusURL, function (result) {
+                $('#status').text(result.status);
+                // add any channels found
+                if (result.channels != null) {
+                    scannedChannels = scannedChannels.concat(result.channels);
+                    var component = app.__vue__.$refs.selectList;
+                    component.showChannels(result.channels);
+                }
+                // have we reached the end of the scan?
+                if (result.complete) {
+                    // scan complete
+                    clearInterval(timer);
+                    $('#status').text("");
+                    $("#saveChannelsBtn").show();
+                }
+            });
+        }
+
+        function doSomething() {
+            console.log("testing");
+        }
+
+        function reloadEPGSources() {
+            showImport();
+        }
+    </script>
+</body>
+</html>

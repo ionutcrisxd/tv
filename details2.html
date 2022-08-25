@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Recordings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+
+    <style>
+        body {
+            padding-top: 0px;
+        }
+
+        .container-fluid {
+            padding-right: 0px;
+            padding-left: 0px;
+        }
+
+        #fanart {
+            position: fixed;
+            top: -1%;
+            left: -1%;
+            width: 102%;
+            height: 102%;
+        }
+
+        #fanart-mask {
+            position: fixed;
+            top: -1%;
+            left: -1%;
+            width: 102%;
+            height: 102%;
+            background: linear-gradient(rgb(0,0,0,0.6), rgb(0,0,0,0.6));
+        }
+
+        #fanart img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            min-width: 90%;
+            min-height: 90%;            
+        }
+
+        .details-poster {
+            margin-top: 0px;
+            max-width: 100%;
+            border: 2px solid black;
+        }
+
+        .details-show-header {
+            background-color: rgba(0, 0, 0, 0.8);
+            margin-top: 50px;
+            min-height: 120px;            
+        }
+
+        #showName {
+            padding-left: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <div class="widewrapper main" id="fanartx">
+            <a class="navbar-brand navbar-semi-transparent-text details-back-button" id="backButton" href="javascript:history.go(-1)"><span class="fa fa-arrow-left"></span> Back</a>
+        </div>
+        <div class="widewrapper main" id="fanart-mask">
+        </div>
+        <div class="details-show-header">
+            <div class="details-container">
+                <div class="row no-margin">
+                    <div class="col-lg-3 col-md-3 col-sm-4 d-none d-sm-block">
+                        <img id="poster" class="details-poster" />
+                    </div>
+                    <div class="col-lg-9 col-md-9 col-sm-8 col-xs-12">
+                        <h2 id="showName" class="text-nowrap">Some show name</h2>
+                        <recordings_grid ref="recordingsGrid" list="none" view="list"></recordings_grid>
+                    </div>
+                </div>
+            </div>
+            <div class="row no-margin">
+                <div class="col-3">
+                </div>
+                <div class="col-9">
+                    
+                </div>
+            </div>
+        </div>
+        <show_message_modal ref="messageModal"></show_message_modal>
+        <hr />
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/recordings-grid.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        window.addEventListener("load", function (event) {
+
+            checkSession();
+
+            var fanArtURL = "";
+            var posterArtURL = "";
+
+            // get group name
+            var group = getParameterByName("group");
+            var title = getParameterByName("title");
+            $('#showName').text(title);
+
+            // request a filtered list of recordings
+            app.__vue__.$refs.recordingsGrid.showNamedList(group);
+
+            // show artworkjavascript:history.go(-1)
+            var recordingID = getParameterByName("recording_id");
+            if (group == "recurring") {
+                /*
+                fanArtURL = baseNPVRURL + jsonGetEventArt + recurringID + '?artType=fan';
+                posterArtURL = baseNPVRURL + jsonGetEventArt + recurringID + '?artType=poster';
+                $('.jumbotron').css('background-image', 'url(' + fanArtURL + ')');
+                $('#fanart').css('background-image', 'url(' + fanArtURL + ')');
+                $('#fanart').css('min-height', '500px');
+                $('#description').css('min-height', '90px');
+                $('#poster').attr('src', posterArtURL);
+                */
+            } else {
+                fanArtURL = 'services/service?method=recording.artwork&recording_id=' + recordingID + '&fanart=true&with_placeholder=true';
+                posterArtURL = 'services/service?method=recording.artwork&with_placeholder=true&recording_id=' + recordingID;
+                $('.jumbotron').css('background-image', 'url(' + fanArtURL + ')');
+                $('#fanart').css('background-image', 'url(' + fanArtURL + ')');
+                $('#fanart').css('min-height', '650px');
+                //$('#description').css('min-height', '90px');
+                $('#poster').attr('src', posterArtURL);
+            }
+
+            /*
+            $("#backButton").click(function () {
+                window.history.go(-1);
+                event.preventDefault();
+            });*/
+        });
+    </script>
+</body>
+</html>

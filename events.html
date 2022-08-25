@@ -1,0 +1,11 @@
+<html>
+<body>
+this is a testasdasdasdasdasd
+  <script>
+var source = new EventSource('localhost:5000/event-stream');
+source.onmessage = function (event) {
+  alert(event.data);
+};
+  </script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Guide Setup</title>
+
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="settings.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+</head>
+<body class="settings-body">
+    <div class="container-fluid" id="app">
+
+        <p>For streaming video to some types of clients, such as this web browser based client, the application needs to transcode the video to a format that can be played by that client.</p>
+
+        <div class="form-group">
+            <div class="row">
+                <div class="col-4 col-sm-5 col-xs-6">
+                    <h6>Preferred Streaming Profile</h6>
+                    <div class="input-group my-group">
+                        <select id="streamingProfile" class="form-control" data-container="body"></select>
+                        <div id="streamingProfileEdit" class="input-group-append">
+                            <div class="input-group-text"><i class="fas fa-cog fa-lg"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group-row">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input big-checkbox" id="avoidIfPossible">
+                <label class="form-check-label" for="avoidIfPossible">Avoid transcoding where possible (for better performance)</label>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+            <div class="row">
+                <div class="col-4 col-sm-5 col-xs-6">
+                    <h6>Video Encoder</h6>
+                    <select id="encoderOptions" class="form-control" data-container="body"></select>
+                </div>
+            </div>
+            <div id="gpuWarning" class="row d-none">
+                <div class="col-12">
+                    <span><strong>NOTE:</strong> On Windows, if you're using an AMD GPU, or a version of Windows earlier than Win10, acceleration is often only possible when running as a process, not a service.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="row">
+                <div class="col-4 col-sm-5 col-xs-6">
+                    <h6>Recording Auto Transcode</h6>
+                    <select id="recordingTranscodeOptions" class="form-control" data-container="body"></select>
+                </div>
+            </div>
+        </div>
+
+        <edit_profile_modal ref="editProfileModal"></edit_profile_modal>
+
+    </div>
+
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="components/edit-profile-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        var id = 0;
+        var timer = 0;
+        var scannedChannels = []
+        var regions = []
+
+        var settings = [
+            { textbox: '#epgUpdateTime', xpath: '/Settings/General/EPGUpdateTime', value: null }
+        ];
+
+        window.addEventListener("load", function (event) {
+            checkSession();
+            loadSettings();
+
+            loadStreamingProfiles();
+
+            loadEncoderOptions();
+
+            loadRecordingTranscodeOptions();
+
+            $('#streamingProfile').on('change', function () {
+                // save selected string profile
+                var preferredStreamingProfile = $("#streamingProfile").val();
+                localStorage.setItem('preferredStreamingProfile', preferredStreamingProfile);
+            });
+
+            $('#encoderOptions').on('change', function () {
+                // save encoder option
+                var encoder = $("#encoderOptions").val();
+                var setting = { xpath: "/Settings/WebServer/VideoEncoder", value: encoder };
+                updated(setting);
+
+                if (encoder == "INTEL" || encoder == "NVIDIA" || encoder == "D3D11VA") {
+                    $("#gpuWarning").removeClass("d-none");
+                } else {
+                    $("#gpuWarning").addClass("d-none");
+                }
+            });
+
+            $('#recordingTranscodeOptions').on('change', function () {
+                // save encoder option
+                var transcodeOption = $("#recordingTranscodeOptions").val();
+                var setting = { xpath: "/Settings/Recording/AutoTranscode", value: transcodeOption };
+                updated(setting);
+            });
+
+            $("#avoidIfPossible").change(function () {
+                if ($("#avoidIfPossible").is(":checked")) {
+                    localStorage.setItem('avoidTranscodeWherePossible', "true");
+                } else {
+                    localStorage.setItem('avoidTranscodeWherePossible', "false");
+                }
+            });
+
+            $("#streamingProfileEdit").click(function () {
+                var streamingProfile = $("#streamingProfile").val();
+                if (streamingProfile != "Default") {
+                    var modal = app.__vue__.$refs.editProfileModal;
+                    modal.show(streamingProfile);
+                }
+            });
+
+            // request settings from server
+            var avoidTranscodeWherePossible = localStorage.getItem('avoidTranscodeWherePossible');
+            if (avoidTranscodeWherePossible == "true" || avoidTranscodeWherePossible == null) {
+                $("#avoidIfPossible").attr("checked", "checked");
+            }
+
+            /*
+            var needed = [];
+            needed.push("/Settings/WebServer/AvoidTranscodeWherePossible");
+            var json = JSON.stringify(needed);
+            $.ajax({
+                url: 'services/service?method=setting.get&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log("got it: " + data.length);
+                    data.forEach(function (serverSetting) {
+                        if (serverSetting.xpath == "/Settings/WebServer/AvoidTranscodeWherePossible") {
+                            if (serverSetting.value == "true") {
+                                $("#avoidIfPossible").attr("checked", "checked");
+                            }
+                        }
+                    });
+                }
+            });*/
+        });
+
+        function loadStreamingProfiles() {
+            var url = 'services/service?method=setting.transcode.options';
+            $.getJSON(url, function (data) {
+                // check if user had any preference for the selected channel group
+                var preferredStreamingPrfile = localStorage.getItem('preferredStreamingProfile');
+
+                // populate the list of channel groups, and select the users preference
+                var streamingProfiles = $("#streamingProfile");
+                streamingProfiles.empty();
+                for (i = 0; i < data.profileOptions.length; i++) {
+                    var profile = data.profileOptions[i];
+                    streamingProfiles.append("<option value='" + profile + "'>" + profile + "</option>");
+                    if (profile == preferredStreamingPrfile) {
+                        streamingProfiles.prop('selectedIndex', i);
+                    }
+                }
+            });
+        }
+
+        function loadRecordingTranscodeOptions() {
+            var url = 'services/service?method=setting.transcode.options&mp4=true';
+            $.getJSON(url, function (data) {
+                // populate the list of channel groups, and select the users preference
+                var streamingProfiles = $("#recordingTranscodeOptions");
+                streamingProfiles.empty();
+                for (i = 0; i < data.profileOptions.length; i++) {
+                    var profile = data.profileOptions[i];
+                    if (profile == "Default") {
+                        streamingProfiles.append("<option value='none'>Leave recordings in native format</option>");
+                    }
+                    else {
+                        streamingProfiles.append("<option value='" + profile + "'>" + profile + "</option>");
+                    }
+                }
+
+                var needed = [];
+                needed.push("/Settings/Recording/AutoTranscode");
+                var json = JSON.stringify(needed);
+                $.ajax({
+                    url: 'services/service?method=setting.get&format=json',
+                    type: 'POST',
+                    data: json,
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log("got it: " + data.length);
+                        data.forEach(function (serverSetting) {
+                            if (serverSetting.xpath == "/Settings/Recording/AutoTranscode") {
+                                var encoder = serverSetting.value;
+                                $("#recordingTranscodeOptions").val(encoder);
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function loadEncoderOptions() {
+            var url = 'services/service?method=setting.encoder.options';
+            $.getJSON(url, function (data) {
+                // populate the list of channel groups, and select the users preference
+                var encoderOptions = $("#encoderOptions");
+                encoderOptions.empty();
+                for (i = 0; i < data.encoderOptions.length; i++) {
+                    var encoder = data.encoderOptions[i];
+                    encoderOptions.append("<option value='" + encoder + "'>" + encoder + "</option>");
+                }
+
+                var needed = [];
+                needed.push("/Settings/WebServer/VideoEncoder");
+                var json = JSON.stringify(needed);
+                $.ajax({
+                    url: 'services/service?method=setting.get&format=json',
+                    type: 'POST',
+                    data: json,
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log("got it: " + data.length);
+                        data.forEach(function (serverSetting) {
+                            if (serverSetting.xpath == "/Settings/WebServer/VideoEncoder") {
+                                var encoder = serverSetting.value;
+                                $("#encoderOptions").val(encoder);
+                                if (encoder == "INTEL" || encoder == "NVIDIA" || encoder == "D3D11VA" || encoder == "AMD") {
+                                    $("#gpuWarning").removeClass("d-none");
+                                } else {
+                                    $("#gpuWarning").addClass("d-none");
+                                }
+                            }
+                        });
+                    }
+                });
+
+            });
+        }
+
+        function loadSettings() {
+            // collect list of settings we need to request from server
+            var needed = [];
+            settings.forEach(function (setting) {
+                needed.push(setting.xpath);
+            });
+
+            // request settings from server
+            var json = JSON.stringify(needed);
+            $.ajax({
+                url: 'services/service?method=setting.get&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log("got it: " + data.length);
+                    data.forEach(function (serverSetting) {
+                        // find which control it relates to
+                        settings.forEach(function (setting) {
+
+                            if (serverSetting.xpath == setting.xpath) {
+                                // handle textboxes
+                                if (setting.hasOwnProperty('textbox')) {
+                                    $(setting.textbox).val(serverSetting.value);
+                                }
+                            }
+                        });
+                    });
+
+                    handleUpdates();
+                },
+                error: function (error) {
+                    // show user the error
+                    alert('Unexpected error loading settings!');
+                }
+            });
+        }
+
+        function updated(setting) {
+
+            var toSave = []
+
+            toSave.push(setting);
+
+            // post save request to server
+            var json = JSON.stringify(toSave);
+            $.ajax({
+                url: 'services/service?method=setting.set&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log(setting.xpath + " saved");
+                },
+                error: function (error) {
+                    // show user the error
+                    console.log("failed to save updated " + setting.xpath);
+                }
+            })
+        }
+
+
+        function handleUpdates() {
+            // collect list of settings we need to request from server
+            settings.forEach(function (setting) {
+
+                // handle textboxes
+                if (setting.hasOwnProperty('textbox')) {
+                    $(setting.textbox).change(function () {
+                        updated(setting);
+                    });
+                }
+
+            });
+        }
+
+        function showMessage(title, body) {
+            var messageModal = app.__vue__.$refs.messageModal;
+            messageModal.showMessage(title, body);
+        }
+
+    </script>
+</body>
+</html>

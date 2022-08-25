@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>NextPVR Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link href="vendor/font-awesome/css/all.min.css" type="text/css" rel="stylesheet">
+
+    <style>
+        .card {
+            width: 390px;
+            max-width: 95%;
+        }
+
+        .input-group-text {
+            background-color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <div class="container">
+            <div class="card card-login mx-auto text-center bg-light">
+                <div class="card-header mx-auto">
+                    <h5><span class="logo_title mt-5">Login Required </span></h5>
+                </div>
+                <div class="card-body">
+                    <form action="" method="post">
+                        <div class="input-group form-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-user"></i></span>
+                            </div>
+                            <input type="text" id="email" class="form-control" placeholder="Username" autofocus>
+                        </div>
+                        <div class="input-group form-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-key"></i></span>
+                            </div>
+                            <input type="password" id="password" class="form-control" placeholder="Password">
+                        </div>
+                        <div class="row">
+                            <div class="form-check col-6">
+                                <!--
+                                <input type="checkbox" class="form-check-input" id="revealPassword">
+                                <label class="form-check-label" for="revealPassword">Show Password</label>
+                                    -->
+                            </div>
+                            <div class="form-check col-6">
+                                <p class="float-right">
+                                    <input type="checkbox" class="form-check-input" id="rememberMeCheck">
+                                    <label class="form-check-label" for="rememberMeCheck">Remember Me</label>
+                                </p>
+                            </div>
+                        </div>                        
+                        <div class="form-group">
+                            <input id="loginButton" type="reset" name="btnLogin" value="Login" class="btn btn-primary float-right login_btn">
+                        </div>                        
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+        <div class="col-12 text-center">
+            <span id="message" class="text-danger"></span><hr />
+        </div>
+    </div>
+
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="js/MD5.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent) ) {
+            $('head').append('<meta name="viewport" content="width=device-width, initial-scale=1"/>');
+        } 
+
+        window.addEventListener("load", function (event)
+        {
+            sessionStorage.removeItem("allow_settings");
+
+            var message = getParameterByName("message");
+            if (message != null && message != "") {
+                $("#message").text(message);
+            }
+
+            $("#loginButton").click(function () {
+                doLogin();
+            });
+
+            $("#revealPassword").click(function () {
+                console.log("reveal");
+            });
+
+            $(document).keyup(function (e) {
+                if ($("#password").is(":focus") && (e.keyCode == 13)) {
+                    doLogin();
+                }
+                if ($("#email").is(":focus") && (e.keyCode == 13)) {
+                    doLogin();
+                }
+            });
+        });
+
+        function doLogin() {
+            var salt = getParameterByName("salt");
+            var username = $("#email").val();
+            var password = MD5($("#password").val());
+            var combined = MD5(salt + ":" + username + ":" + password);
+
+            var url = 'login.html?hash=' + combined;;
+            if ($("#rememberMeCheck").is(":checked")) {
+                url += "&remember=true";
+            }
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1286 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Settings</title>
+
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="settings.css">
+    <link href="vendor/font-awesome/css/all.min.css" type="text/css" rel="stylesheet">
+    <link href="vendor/bootstrap/bootstrap-colorpicker.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <div class="wrapper">
+
+            <!-- Sidebar -->
+            <nav id="sidebar" class="bg-light">
+                <ul class="list-unstyled components text-dark">
+                    <li>
+                        <a id="showAbout" href="#">About</a>
+                    </li>
+                    <li>
+                        <a id="showRecording" href="#">General</a>
+                    </li>
+                    <li>
+                        <a id="showDevices" href="#">Devices</a>
+                    </li>
+                    <li>
+                        <a id="showChannels" href="#">Channels</a>
+                    </li>
+                    <li>
+                        <a id="showTranscoder" href="#">Transcoder</a>
+                    </li>
+                    <li>
+                        <a id="showClient" href="#">Access</a>
+                    </li>
+                    <li>
+                        <a id="showEPG" href="#">Guide</a>
+                    </li>
+                    <li>
+                        <a id="logout" href="#">Logout</a>
+                    </li>
+                </ul>
+            </nav>
+
+
+
+            <!-- Page Content -->
+            <div id="content">
+
+                <donation_modal ref="donationModal"></donation_modal>
+
+                <div id="contentAbout" class="content" style="display: none">
+                    <h5>Welcome to NextPVR</h5>
+
+                    <p>
+                        NextPVR represents thousands of hours of software development and testing. The project is not well funded, and I rely on your donations to keep the project going.
+                        If you use the application regularly, we ask that you use the 'Donate' button to support the project.
+                        NextPVR is free for personal, non-commercial use. <span class="text-white">Commercial use requires a license.</span><br />
+                        <div class="row">
+                            <div>
+                                <a href="https://www.nextpvr.com/donate.html"><img src="images/paypal-donate.png" /></a>
+                            </div>
+
+                        </div>
+                    </p>
+
+                    <div class="donationStatus">
+                        <span id="donator"></span>&nbsp;&nbsp;
+                        <button id="donationButton" type="button" class="btn btn-secondary d-none">Have you donated?</button>
+                    </div>
+
+                    <br />
+
+                    <p class="text-primary">
+                        Version: <span id="version"></span>.<span id="buildDate"></span>&nbsp;&nbsp;<span class="text-success" id="onlineVersion"></span>
+                    </p>
+
+
+                    <hr />
+
+                    <h6>Where do I get the log files?</h6>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-10">
+                                <button id="logsButton" class='btn btn-secondary'>
+                                    <i class="fa fa-bug"></i> Log Files
+                                </button>
+                                &nbsp;
+                                <button id="verbose" class='btn btn-secondary d-none'>
+                                    <i class="fa fa-bug"></i> Enable Verbose
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+
+
+                    <h6>How can I tell what it's currently doing?</h6>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-10">
+                                <button id="statusButton" class='btn btn-secondary'>
+                                    <i class="fa fa-info-circle"></i> Device Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+
+                    <div id="uiClientAccess" class="d-none">
+                        <h6>Where is that other web client?</h6>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-10">
+                                    <a href="uiclient.html" class="btn btn-secondary " role="button" aria-pressed="true"> <i class="fa fa-fire-alt"></i> UI Client</a>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                    </div>
+
+                    <h6>How do I update the EPG?</h6>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-10">
+                                <button id="updateEPGButton" class='btn btn-secondary'>
+                                    <i class="fa fa-download"></i> Update EPG
+                                </button>
+                                &nbsp;
+                                <button id="emptyEPGButton" class='btn btn-secondary'>
+                                    <i class="fa fa-trash"></i> Empty EPG
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-10">
+                                <span id="epgUpdateStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <update_epg_modal ref="updateEPGModal"></update_epg_modal>
+                    <device_status_modal ref="deviceStatusModal"></device_status_modal>
+                    <hr />
+
+
+                </div>
+
+
+
+
+
+                <div id="contentDevices" class="content" style="display: none">
+                    <p class="text-secondary">Below is a list of devices available in your system. Click a device to setup channels for that device. The devices are listed in priority order. Use the up/down buttons to adjust the relative priority of each device. Press Ctrl key for additional device options.</p>
+                    <div class="row pad-left">
+                        <button id="refreshDevices" type="button" class="btn btn-secondary"><i class="fas fa-sync"></i> ReScan For Devices</button>
+                        <div class="checkbox ml-auto float-right">
+                            <label for="checkbox1">
+                                <span>Keep digital tuners primed</span>
+                            </label>&nbsp;
+                            <input type="checkbox" id="checkKeepPrimed" class="big-checkbox pad-right" />
+                        </div>
+                    </div>
+                    <devices_grid ref="deviceList"></devices_grid>
+                </div>
+
+                <div id="contentOther" class="content" style="display: none">
+                    <span>test</span>
+                </div>
+
+                <div id="contentChannels" class="content" style="display: none">
+                    <div class="row all-available">
+                        <div id="channelsColumn" style="width: 100%;">
+                            <div class="row all-available">
+                                <div>
+                                    <form autocomplete="nope">
+                                        <input type="text" class="form-control input-dark" id="filter">
+                                    </form>
+                                </div>&nbsp;
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-magic"></i> Advanced Tools
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                        <a id="autoMerge" class="dropdown-item" href="#">Auto Merge</a>
+                                        <a id="autoMap" class="dropdown-item" href="#">Auto Map</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a id="merge" class="dropdown-item" href="#">Merge</a>
+                                        <a id="unmerge" class="dropdown-item" href="#">Unmerge</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a id="reloadIcons" class="dropdown-item" href="#">Reload Icon Cache</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a id="channelGroups" class="dropdown-item" href="#"><i class="fa fa-chevron-right"></i> Channel Groups</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <manage_channels_grid ref="channelList"></manage_channels_grid>
+                            </div>
+                        </div>
+                        <div id="groupsColumn" class="d-none">
+                            <div>
+                                <strong>Groups</strong>
+                                <div id="addGroup" class="btn-group">
+                                    <i class="fa fa-plus-circle fa-lg"></i>
+                                </div>
+                            </div>
+                            <div><channel_groups ref="channelGroups"></channel_groups></div>
+                        </div>
+                    </div>
+
+
+                    <edit_channel_modal ref="channelDetailsModal"></edit_channel_modal>
+                    <add_sd_lineup_modal ref="addSDModal"></add_sd_lineup_modal>
+                    <add_group_modal ref="addGroupModal"></add_group_modal>
+                    <add_xmltv_lineup_modal ref="addXMLTVModal"></add_xmltv_lineup_modal>
+                    <auto_map_modal ref="autoMapModal"></auto_map_modal>
+                    <genre_modal ref="genreModal"></genre_modal>
+                </div>
+
+
+                <div id="contentRecording" class="content" style="display: none">
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                                <h6>Channel Group</h6>
+                                <select id="selectedChannelGroup" class="form-control" data-container="body"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-lg-5 col-sm-10 col-xs-12">
+                                <h6>Live TV Buffer Directory</h6>
+                                <div class="input-group">
+                                    <input class="form-control" type="text" id="liveTVBufferDirectory" placeholder="Live TV Buffer Directory">
+                                    <div id="browseBufferDirectory" class="input-group-append">
+                                        <div class="input-group-text"><i class="fas fa-folder-open"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-3 col-xs-3">
+                                <h6>Minutes</h6>
+                                <div class="input-group">
+                                    <input class="form-control" type="number" min="1" value="20" id="liveTVBufferMinutes">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-lg-5 col-sm-10 col-xs-12">
+                                <h6>Recording Directory</h6>
+                                <div class="input-group">
+                                    <input class="form-control" type="text" id="recordingDirectory" placeholder="Recording Directory">
+                                    <div id="browseRecordingDirectory" class="input-group-append">
+                                        <div class="input-group-text"><i class="fas fa-folder-open"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <recording_directories ref="recordingDirectories">></recording_directories>
+                                <button id="addRecordingDirectory" class='btn btn-secondary'>
+                                    <i class="fa fa-plus"></i> Add Other Recording Directory
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-2 col-sm-3 col-xs-4">
+                                <h6>Pre-Padding</h6>
+                                <input class="form-control" type="number" value="0" id="prePadding">
+                            </div>
+
+                            <div class="col-md-2 col-sm-3 col-xs-4">
+                                <h6>Post-Padding</h6>
+                                <input class="form-control" type="number" value="0" id="postPadding">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <h6>Interface Settings</h6>
+                    <div class="form-group row">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkShowNewInGuide">
+                                <label class="form-check-label" for="checkShowNewInGuide">
+                                    Highlight 'new' shows
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkShowGenreColors">
+                                <label class="form-check-label" for="checkShowGenreColors">
+                                    Show genre colors in guide
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkConfirmOnDelete">
+                                <label class="form-check-label" for="checkConfirmOnDelete">
+                                    Confirm on Delete
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+
+                    <h6>Misc</h6>
+                    <div class="form-group row">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkScanDevicesAtStartup">
+                                <label class="form-check-label" for="checkScanDevicesAtStartup">
+                                    Scan devices at startup
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkUpdateChannelNumbers">
+                                <label class="form-check-label" for="checkUpdateChannelNumbers">
+                                    Update existing channel numbers during scan
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+
+                    <h6>Artwork Sources</h6>
+                    <div class="form-group row">
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkUseSchedulesDirect">
+                                <label class="form-check-label" for="checkUseSchedulesDirect">
+                                    Use SchedulesDirect
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkUseTheMovieDB">
+                                <label class="form-check-label" for="checkUseTheMovieDB">
+                                    Use themoviedb.com
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkUseTVMaze">
+                                <label class="form-check-label" for="checkUseTVMaze">
+                                    Use tvmaze.com
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+
+                    <h6>Recording Settings</h6>
+                    <div class="form-group row">
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkUseS01E01Naming">
+                                <label class="form-check-label" for="checkUseS01E01Naming">
+                                    Use S01E01 file naming format if possible
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkMovieYearNaming">
+                                <label class="form-check-label" for="checkMovieYearNaming">
+                                    Use Movie.Name.(YEAR) format for movies if possible
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkPlexDateFormat">
+                                <label class="form-check-label" for="checkPlexDateFormat">
+                                    Use file names with Plex date format
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkReplaceSpaceWithPeriod">
+                                <label class="form-check-label" for="checkReplaceSpaceWithPeriod">
+                                    Replace spaces with period character
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkCreateSeasonDirectories">
+                                <label class="form-check-label" for="checkCreateSeasonDirectories">
+                                    Create season directory if possible
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkAvoidDuplicates">
+                                <label class="form-check-label" for="checkAvoidDuplicates">
+                                    Avoid duplicate recordings where possible
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input big-checkbox" type="checkbox" value="" id="checkLookForConflictAlternatives">
+                                <label class="form-check-label" for="checkLookForConflictAlternatives">
+                                    Look for alternate airings on unresolved conflicts
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-10">
+                                <button id="exportRecordingsButton" class='btn btn-secondary'>
+                                    <i class="fa fa-download"></i> Export Recordings
+                                </button>
+                                &nbsp;
+                                <button id="importRecordingsButton" class='btn btn-secondary'>
+                                    <i class="fa fa-upload"></i> Import Recordings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <import_channels_modal ref="importChannelsModal"></import_channels_modal>
+                    <directory_browser_modal ref="browseDirectoryModal"></directory_browser_modal>
+                    <import_recordings_modal ref="importRecordingsModal"></import_recordings_modal>
+                    <add_recording_directory_modal ref="addRecordingDirectoryModal"></add_recording_directory_modal>
+                </div>
+
+                <div id="contentClient" class="content" style="display: none">
+                    <h5>Web Login</h5>
+                    <p>The following login details are used to log into the web application. If you intend to open access to the internet, it's recommended you change the default login settings. To change, you must supply the existing password, and the new password twice.</p>
+                    <div class="col-lg-5">
+                        <div class="form-row">
+                            <label class="col-sm-4 col-form-label" for="name">Username:</label>
+                            <input type="text" id="webapp-username" class="form-control col-8" placeholder="Username" autofocus>
+                        </div>
+                        <div class="form-row">
+                            <label class="col-sm-4 col-form-label" for="name">Current Password:</label>
+                            <input id="webapp-password" class="form-control col-8 fake-pwd" autofocus>
+                        </div>
+                        <div class="form-row">
+                            <label class="col-sm-4 col-form-label" for="name">New Password:</label>
+                            <input id="newpassword1" class="form-control col-8 fake-pwd" autocomplete="off">
+                        </div>
+                        <div class="form-row">
+                            <label class="col-sm-4 col-form-label" for="name">Password Again:</label>
+                            <input id="newpassword2" class="form-control col-8 fake-pwd" autocomplete="off">
+                        </div>
+
+                        <div class="form-row">
+                            <label class="col-sm-4 col-form-label" for="name">&nbsp;</label>
+                            <button id="updateLogin" class='btn btn-secondary col-8'>
+                                <i class="fas fa-user-edit"></i> Update Login
+                            </button>
+                        </div>
+                    </div>
+
+                    <!--
+                    <user_grid></user_grid>
+                    <edit_user_modal  ref="editUserModal"></edit_user_modal>
+                        -->
+                    <hr />
+
+
+                    <h5>Application Access</h5>
+                    <p>The following PIN Code is used to access from most other clients, such as our iOS and Android apps, NLite, Kodi, Emby etc. It can be a mixture of numbers or letters. If you're using over the internet, we recommend a longer pin number.</p>
+                    <form class="col-lg-5">
+                        <div class="form-row">
+                            <label class="col-sm-4 col-form-label" for="name">PIN Code:</label>
+                            <input id="pin" autocomplete="off" class="form-control col-8 fake-pwd" placeholder="PIN Code">
+                        </div>
+                    </form>
+                    <hr />
+
+                    <h5>Remote Access</h5>
+                    <p>If you're intending to use NextPVR over Internet, you need to tick the checkbox below. It'll only allow you to login remotely if you have changed the username/password and pin from the default values. This is required to help keep your machine secure.</p>
+                    <form class="col-lg-5">
+                        <div class="form-group row minimal-pad-left">
+                            <div class="col-8">
+                                <div class="form-check">
+                                    <input class="form-check-input big-checkbox" type="checkbox" value="" id="allowRemoteAccess">
+                                    <label class="form-check-label" for="allowRemoteAccess">
+                                        Allow remote access
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <hr />
+                    <hr />
+
+                    <h5>Unauthenticated Access</h5>
+                    <p>The option below can be used to enable m3u and live stream access from clients such as VLC, without the need to login. We do not recommend enabling this if your NextPVR server is accessible from the Internet.</p>
+                    <form class="col-lg-7">
+                        <div class="form-group row minimal-pad-left">
+                            <div class="col-8">
+                                <div class="form-check">
+                                    <input class="form-check-input big-checkbox" type="checkbox" value="" id="allowUnathenticatedStreams">
+                                    <label class="form-check-label" for="allowUnathenticatedStreams">
+                                        Allow unauthenticated access for streaming Live TV / Recordings
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <show_message_modal ref="messageModal"></show_message_modal>
+                </div>
+            </div>
+            <!--
+             <button type="button" id="sidebarCollapse" class="btn btn-info">
+                 <i class="fas fa-align-left"></i>
+                 <span>Toggle Sidebar</span>
+             </button>
+            -->
+        </div>
+
+    </div>
+
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <!--    <script src="//code.jquery.com/jquery-3.4.1.js"></script> -->
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="js/cookies.js"></script>
+    <script src="vendor/bootstrap/bootstrap-colorpicker.js"></script>
+    <script src="js/MD5.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/manage-channels.js"></script>
+    <script src="components/edit-channel-details.js"></script>
+    <script src="components/channel-groups.js"></script>
+    <script src="components/devices-grid.js"></script>
+    <script src="components/update-epg-modal.js"></script>
+    <script src="components/device-status-modal.js"></script>
+    <script src="components/epg-sources.js"></script>
+    <script src="components/add-sd-lineup-modal.js"></script>
+    <script src="components/add-xmltv-lineup-modal.js"></script>
+    <script src="components/add-group-modal.js"></script>
+    <script src="components/add-recrording-directory.js"></script>
+    <script src="components/auto-map-modal.js"></script>
+    <script src="components/directory-browser-modal.js"></script>
+    <script src="components/genre-modal.js"></script>
+    <script src="components/recording-directories.js"></script>
+    <script src="components/import-channels-modal.js"></script>
+    <script src="components/import-recordings-modal.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="components/users-grid.js"></script>
+    <script src="components/edit-user-modal.js"></script>
+    <script src="components/donation-modal.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+
+        var showingGroups = false;
+        var currentTab = "";
+
+        var settings = [
+            { label: '#version', xpath: '/Settings/Version/CurrentVersion', value: null },
+            { label: '#buildDate', xpath: '/Settings/Version/BuildDate', value: null },
+
+            { textbox: '#recordingDirectory', xpath: '/Settings/Recording/RecordingDirectory', value: null },
+            { textbox: '#liveTVBufferDirectory', xpath: '/Settings/Recording/LiveTVBufferDirectory', value: null },
+
+            { textbox: '#webapp-username', xpath: '/Settings/WebServer/Username', value: null },
+            //{ textbox: '#password', xpath: '/Settings/WebServer/Password', value: null },
+            { textbox: '#pin', xpath: '/Settings/WebServer/PinMD5', value: null },
+
+            { number: '#prePadding', xpath: '/Settings/Recording/PrePadding', value: null },
+            { number: '#postPadding', xpath: '/Settings/Recording/PostPadding', value: null },
+            { number: "#liveTVBufferMinutes", xpath: '/Settings/General/SlipMinutes', value: null },
+
+            { checkbox: '#checkUseS01E01Naming', xpath: '/Settings/Recording/UseSeasonEpisodeNamingIfPossible', value: null },
+            { checkbox: '#checkMovieYearNaming', xpath: '/Settings/Recording/UseMovieYearNamingIfPossible', value: null },
+            { checkbox: '#checkPlexDateFormat', xpath: '/Settings/Recording/UsePlexStyleNaming', value: null },
+            { checkbox: '#checkReplaceSpaceWithPeriod', xpath: '/Settings/Recording/FileNameReplaceSpaceWithPeriod', value: null },
+            { checkbox: '#checkCreateSeasonDirectories', xpath: '/Settings/Recording/FileNameCreateSeasonDirectories', value: null },
+            { checkbox: '#checkAvoidDuplicates', xpath: '/Settings/Recording/AllowDuplicates', inverse: true, value: null },
+            { checkbox: '#checkLookForConflictAlternatives', xpath: '/Settings/Recording/LookForConflictAlternatives', value: null },
+            { checkbox: '#allowRemoteAccess', xpath: '/Settings/WebServer/AllowRemoteAPI', value: null },
+            { checkbox: '#allowUnathenticatedStreams', xpath: '/Settings/WebServer/AllowUnauthenticatedStreaming', value: null },
+            { checkbox: '#checkShowNewInGuide', xpath: '/Settings/General/ShowNewInGuide', value: null },
+            { checkbox: '#checkShowGenreColors', xpath: '/Settings/General/ShowGenreColors', value: null },
+            { checkbox: '#checkKeepPrimed', xpath: '/Settings/Recording/PrimeDigitalTuners', value: null },
+            { checkbox: '#checkConfirmOnDelete', xpath: '/Settings/Recording/ConfirmOnDelete', value: null },
+
+            { checkbox: '#checkUpdateChannelNumbers', xpath: '/Settings/General/UpdateExistingChannelNumbers', value: null },
+            { checkbox: '#checkScanDevicesAtStartup', xpath: '/Settings/General/ScanDevicesAtStartup', value: null },
+
+            { checkbox: '#checkUseSchedulesDirect', xpath: '/Settings/General/ArtworkFromSchedulesDirect', value: null },
+            { checkbox: '#checkUseTheMovieDB', xpath: '/Settings/General/ArtworkFromTheMovieDB', value: null },
+            { checkbox: '#checkUseTVMaze', xpath: '/Settings/General/ArtworkFromTVMaze', value: null },
+
+            { label: '#donator', xpath: '/DonatorStatus', value: null },
+        ];
+
+        var deviceModeAdvanced = false;
+
+        window.addEventListener("load", function (event) {
+            $("#nav-settings").addClass("active");
+            checkSession();
+
+
+            window.eventBus = new Vue();
+            window.eventBus.$on('promptForUpdateEPG', function (data) {
+                promptForUpdateEPG();
+            });
+            window.eventBus.$on('editUser', function (user) {
+                editUser(user);
+            });
+
+
+            document.onkeydown = function (e) {
+                if (deviceModeAdvanced == false && e.ctrlKey == true) {
+                    deviceModeAdvanced = true;
+                    var deviceList = app.__vue__.$refs.deviceList;
+                    deviceList.showAdvancedMode();
+
+                    $("#verbose").removeClass("d-none");
+                }
+
+                if ($("#contentChannels").is(":visible") && $('#channelDetailsModal').is(':visible') == false) {
+                    const key = e.key; // const {key} = event; ES6+
+                    if (key === "Delete") {
+                        var channelList = app.__vue__.$refs.channelList;
+                        channelList.deleteChannels();
+                    }
+                }
+            };
+
+            document.onkeyup = function (e) {
+                if (deviceModeAdvanced && e.ctrlKey == false) {
+                    deviceModeAdvanced = false;
+                    var deviceList = app.__vue__.$refs.deviceList;
+                    deviceList.showNormalMode();
+
+                    $("#verbose").addClass("d-none");
+                }
+            };
+
+            var availableVersionCheck = 'services/service?method=setting.version';
+            $.getJSON(availableVersionCheck, function (data) {
+                if (data.available != data.current) {
+                    $('#onlineVersion').text("(" + data.available + " is available for download)");
+                }
+            });
+
+            /* left hand side bar */
+            $('#sidebarCollapse').on('click', function () {
+                $('#sidebar').toggleClass('active');
+            });
+
+            $('#updateLogin').on('click', function (event) {
+                var password = $('#webapp-password').val();
+                var newpassword1 = $('#newpassword1').val();
+                var newpassword2 = $('#newpassword2').val();
+                if (password === "") {
+                    showMessage("Update Login", "You must enter the existing password, the new password, and the matching confirmation of the new password");
+                    //alert("You must enter the existing password, the new password, and the matching confirmation of the new password");
+                }
+                else if (newpassword1 === "" || newpassword2 === "") {
+                    showMessage("Update Login", "You must enter the existing password, the new password, and the matching confirmation of the new password");
+                    //alert("You must enter the existing password, the new password, and the matching confirmation of the new password");
+                }
+                else if (newpassword1.length < 6) {
+                    showMessage("Update Login", "Your new password must be at least 6 characters");
+                    //alert("Your new password must be at least 6 characters");
+                }
+                else if (newpassword1 !== newpassword2) {
+                    showMessage("Update Login", "The new passwords dont match");
+                    //alert("The new passwords dont match");
+                }
+                else {
+                    var existingPassword = MD5(password);
+                    var newPassword = MD5(newpassword1);
+                    var url = 'services/service?method=session.update.login&existing=' + existingPassword + '&new=' + newPassword;
+                    $.getJSON(url, function (data) {
+                        if (data.stat !== 'ok') {
+                            showMessage("Update Login", "Failed to update password. Confirm you've entered you existing password correctly.");
+                            //alert("Failed to update password. Confirm you've entered you existing password correctly.");
+                        }
+                        else {
+                            showMessage("Update Login", "Password updated");
+                        }
+
+                    });
+                }
+            });
+
+            $('#showDevices').on('click', function () {
+                var deviceList = app.__vue__.$refs.deviceList;
+                deviceList.reload();
+                showTab('#contentDevices');
+            });
+
+            $('#refreshDevices').on('click', function () {
+                var deviceList = app.__vue__.$refs.deviceList;
+                deviceList.forceRefresh();
+            });
+
+            $('#showAbout').on('click', function () {
+                showTab('#contentAbout');
+            });
+
+            $('#showChannels').on('click', function () {
+                // start with no channels selected
+                OnSelectedGroup(null);
+                var channelList = app.__vue__.$refs.channelList;
+                channelList.reload();
+                reloadGroups();
+                showTab('#contentChannels');
+            });
+
+            $('#showTranscoder').on('click', function () {
+                var height = $("#sidebar").outerHeight();
+                var width = $(document).width() - $('#sidebar').outerWidth();
+                width -= 50;
+                $('#contentOther').empty();
+                $('<iframe id="displayFrame" src="transcoder.html" frameborder="0" id="deviceSettingsFrame" style="min-height:' + (height - 54) + 'px; height:' + height + 'px; width: ' + width + 'px; border: none"></iframe>')
+                    .appendTo('#contentOther');
+                showTab('#contentOther');
+            });
+
+            $('#showRecording').on('click', function () {
+                showTab('#contentRecording');
+            })
+
+            $('#showClient').on('click', function () {
+                showTab('#contentClient');
+            })
+
+            $('#showEPG').on('click', function () {
+                var height = $("#sidebar").outerHeight();
+                var width = $(document).width() - $('#sidebar').outerWidth();
+                width -= 50;
+
+                $('#contentOther').empty();
+                $('<iframe id="displayFrame" src="epg.html" frameborder="0" id="deviceSettingsFrame" style="min-height:' + (height - 54) + 'px; height:' + height + 'px; width: ' + width + 'px; border: none"></iframe>')
+                    .appendTo('#contentOther');
+                showTab('#contentOther');
+            })
+
+
+            /* about tab */
+            $("#updateEPGButton").click(function () {
+                var modal = app.__vue__.$refs.updateEPGModal;
+                modal.updateEPG();
+            });
+
+            $("#emptyEPGButton").click(function () {
+                var url = 'services/service?method=system.epg.empty';
+                $.getJSON(url, function (data) {
+                    alert("All guide data has been deleted");
+                });
+
+                if (deviceModeAdvanced) {
+                    url = 'services/service?method=setting.sd.clearart';
+                    $.getJSON(url, function (data) {
+                        alert("All cached Schedules Direct artwork locations have been cleared");
+                    });
+                }
+            });
+
+            $("#verbose").click(function () {
+                var url = 'services/service?method=system.verbose';
+                $.getJSON(url, function (data) {
+                    alert("Verbose logging mode has been enabled until the recording service is next restarted.");
+                });
+            });
+
+
+            $("#statusButton").click(function () {
+                var modal = app.__vue__.$refs.deviceStatusModal;
+                modal.showStatus();
+                //showMessage('test', 'test');
+            });
+
+            $("#logsButton").click(function (e) {
+                e.preventDefault();  //stop the browser from following
+                window.location.href = "services/service?method=system.logs&format=json";
+            });
+
+
+            /* channels tab */
+            $("#autoMerge").click(function (e) {
+                var url = 'services/service?method=setting.channel.automerge';
+                $.getJSON(url, function (data) {
+                    console.log("automerge done")
+                    var channelList = app.__vue__.$refs.channelList;
+                    channelList.reload();
+                });
+            });
+
+            $("#autoMap").click(function (e) {
+                var modal = app.__vue__.$refs.autoMapModal;
+                modal.show();
+            });
+
+            $("#merge").click(function (e) {
+                var channelList = app.__vue__.$refs.channelList;
+                channelList.merge();
+            });
+
+            $("#unmerge").click(function (e) {
+                var channelList = app.__vue__.$refs.channelList;
+                channelList.unmerge();
+            });
+
+            $("#donationButton").click(function (e) {
+                var modal = app.__vue__.$refs.donationModal;
+                modal.show();
+            });
+
+
+            $("#addGroup").click(function (e) {
+                var modal = app.__vue__.$refs.addGroupModal;
+                modal.show();
+            });
+
+            $('#genre').on('click', function () {
+                var genreModal = app.__vue__.$refs.genreModal;
+                genreModal.show();
+            });
+
+            $("#reloadIcons").click(function (e) {
+                var url = 'services/service?method=setting.icons.reload';
+                $.getJSON(url, function (data) {
+                    alert("Channel icons reloaded");
+                });
+            });
+
+            $("#channelGroups").click(function (e) {
+                console.log("toggle channel groups");
+                if (showingGroups) {
+                    showingGroups = false;
+
+                    $("#channelsColumn").removeClass("col-10");
+                    $("#channelsColumn").addClass("col-12");
+
+                    $("#groupsColumn").removeClass("col-2");
+                    $("#groupsColumn").addClass("d-none");
+
+                    var channelGroups = app.__vue__.$refs.channelGroups;
+                    channelGroups.selectGroup("All Channels");
+
+                    var channelList = app.__vue__.$refs.channelList;
+                    channelList.selectGroupMembers(null);
+
+                } else {
+                    showingGroups = true;
+
+                    $("#channelsColumn").removeClass("col-12");
+                    $("#channelsColumn").addClass("col-10");
+
+                    $("#groupsColumn").removeClass("d-none");
+                    $("#groupsColumn").addClass("col-2");
+
+                    var channelList = app.__vue__.$refs.channelList;
+                    channelList.selectGroupMembers("All Channels");
+                }
+            });
+
+            $('#filter').on('input', function (e) {
+                var text = $('#filter').val();
+                var channelList = app.__vue__.$refs.channelList;
+                channelList.filter(text);
+            });
+
+
+
+            /* general tab */
+            var selectedChannelGroup = readCookie('channel-group');
+            $('#selectedChannelGroup').on('change', function () {
+                // save selected channel group to a cookie
+                var preferredChannelGroup = $("#selectedChannelGroup").val();
+                localStorage.setItem('preferredChannelGroup', preferredChannelGroup);
+            });
+
+
+            $("#browseBufferDirectory").click(function (e) {
+                var modal = app.__vue__.$refs.browseDirectoryModal;
+                var defaultDirectory = $("#liveTVBufferDirectory").val();
+                modal.show("#liveTVBufferDirectory", defaultDirectory);
+            });
+
+            $("#browseRecordingDirectory").click(function (e) {
+                var modal = app.__vue__.$refs.browseDirectoryModal;
+                var defaultDirectory = $("#recordingDirectory").val();
+                modal.show("#recordingDirectory", defaultDirectory);
+            });
+
+            $("#exportRecordingsButton").click(function (e) {
+                var url = 'services/service?method=recording.export';
+                window.location.href = url;
+            });
+
+            $("#importRecordingsButton").click(function (e) {
+                var modal = app.__vue__.$refs.importRecordingsModal;
+                modal.show();
+            });
+
+            $("#addRecordingDirectory").click(function (e) {
+                var modal = app.__vue__.$refs.addRecordingDirectoryModal;
+                modal.show();
+            });
+
+            // handle logout
+            $("#logout").click(function (e) {
+                var url = 'service?method=session.logout';
+                $.getJSON(url, function (data) {
+                    console.log("logout complete");
+                    document.cookie = 'nextpvr_plc=; Max-Age=0'
+                    window.location.href = "index.html?reload=true";
+                    sessionStorage.removeItem("allow_settings");
+                });
+            });
+
+            // don't show UI client button on mobile devices
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) == false) {
+                // true for mobile device
+                $("#uiClientAccess").removeClass("d-none");
+            }
+
+
+            loadSettings();
+            loadChannelGroups();
+            handleUpdates();
+
+            // start with about tab
+            showTab("#contentAbout");
+
+            // check donation status
+            var url = 'service?method=setting.get&key=/Donator';
+            $.getJSON(url, function (data) {
+                if (data.value == "false") {
+                    $('#donationButton').removeClass("d-none");
+                }
+            });
+
+            checkEPGUpdating();
+
+            // Create IE + others compatible event handler
+            var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+            var eventer = window[eventMethod];
+            var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+
+            // Listen to message from child window
+            eventer(messageEvent, function (e) {
+                console.log('parent received message:  ', e.data);
+                if (e.data == "resize") {
+                    var iframewindow = frames[0];
+                    if (iframewindow != undefined) {
+                        var height = iframewindow.document.body.scrollHeight;
+                        var minHeight = $("#sidebar").outerHeight();
+                        if (height < minHeight)
+                            height = minHeight;
+                        if (height < 450)
+                            height = 450;
+
+                        $('#displayFrame').css({ "height": (height + 24) + "px" });
+                        $('#contentOther').css({ "height": (height + 54) + "px" });
+                    }
+                }
+            }, false);
+        });
+
+        function checkEPGUpdating() {
+            var url = 'services/service?method=system.epg.status&format=json';
+            $.getJSON(url, function (data) {
+                if (data.hasOwnProperty("status")) {
+                    //$('#updateEPGStatus').text("Starting EPG update");
+                    $('#epgUpdateStatus').text(data.status);
+                    if (data.hasOwnProperty("updating") && data.updating == true) {
+                        self.timer = setTimeout(checkEPGUpdating, 1000);
+                    }
+                } else {
+                    $('#epgUpdateStatus').text("");
+                }
+            });
+        }
+
+        function licenseSuccessful() {
+            console.log("Donation successfully registered. Thanks!");
+            loadSettings();
+            $('#donationButton').addClass("d-none");
+        }
+
+        function licenseFailed() {
+            alert("Donation not found. Maybe try again using your paypal email address in the place of the transaction id.\n\nIf still unsuccessful, send 'sub' a PM on the NextPVR forum and he can check why it's failing for you.");
+        }
+
+        function resizeIFrameToFitContent(iFrame) {
+            //iFrame.width = iFrame.contentWindow.document.body.scrollWidth;
+            iFrame.height = iFrame.contentWindow.document.body.scrollHeight;
+        }
+
+        function resizeIframe(obj) {
+            var height = obj.contentWindow.document.body.scrollHeight;
+            obj.style.height = height + "px";
+        }
+
+        function importChannels(device) {
+            console.log("import channels");
+            var modal = app.__vue__.$refs.importChannelsModal;
+            modal.show();
+        }
+
+        function showTab(tabName) {
+            $('#contentAbout').hide();
+            $('#contentDevices').hide();
+            $('#contentChannels').hide();
+            $('#contentRecording').hide();
+            $('#contentOther').hide();
+            $('#contentClient').hide();
+
+            //var width = $(document).width() - $('#sidebar').outerWidth();
+            var width = $(document).width();
+            width -= 20;
+            $('#content').css("width", width);
+
+            $(tabName).show();
+
+            currentTab = tabName;
+        }
+
+        function reloadRecordingDirectories() {
+            var epgSources = app.__vue__.$refs.recordingDirectories;
+            epgSources.reloadDirectories();
+        }
+
+        function loadChannelGroups() {
+            var url = 'services/service?method=channel.groups&format=json';
+            $.getJSON(url, function (data) {
+                // check if user had any preference for the selected channel group
+                var preferredChannelGroup = localStorage.getItem('preferredChannelGroup');
+
+                // populate the list of channel groups, and select the users preference
+                var channelGroups = $("#selectedChannelGroup");
+                channelGroups.empty();
+                for (i = 0; i < data.groups.length; i++) {
+                    var group = data.groups[i];
+                    channelGroups.append("<option value='" + group + "'>" + group + "</option>");
+                    if (group == preferredChannelGroup) {
+                        channelGroups.prop('selectedIndex', i);
+                    }
+                }
+            });
+        }
+
+
+        /* devices functions */
+        function showDevicePage(url) {
+            var height = $("#sidebar").outerHeight();
+            var width = $(document).width() - $('#sidebar').outerWidth();
+            width -= 40;
+
+            //height = 300;
+
+            $('#contentOther').empty();
+            $('<iframe src="' + url + '" id="displayFrame" style="height:400px;width:100%;border:none;overflow:hidden;"></iframe>')
+                .appendTo('#contentOther')
+            showTab('#contentOther');
+
+
+            $('#displayFrame').css({ "height": (height + 24) + "px" });
+            $('#contentOther').css({ "height": (height + 54) + "px" });
+        }
+
+
+        /* channels functions */
+        function reloadEPGSources() {
+            var epgSources = app.__vue__.$refs.epgSources;
+            epgSources.reloadSources();
+        }
+
+        function reloadGroups() {
+            var epgSources = app.__vue__.$refs.channelGroups;
+            epgSources.reloadGroups();
+            // also reload the dropdown on Settings->General
+            loadChannelGroups();
+        }
+
+        function reloadChannels() {
+            var channelList = app.__vue__.$refs.channelList;
+            channelList.reload();
+            reloadGroups();
+        }
+
+        function clearFilter() {
+            $('#filter').val("");
+        }
+
+        function OnSelectedGroup(groupName) {
+            console.log(groupName);
+            var channelList = app.__vue__.$refs.channelList;
+            channelList.selectGroupMembers(groupName);
+        }
+
+        /* recordings functions */
+        function loadSettings() {
+            // collect list of settings we need to request from server
+            var needed = [];
+            settings.forEach(function (setting) {
+                needed.push(setting.xpath);
+            });
+
+            // request settings from server
+            var json = JSON.stringify(needed);
+            $.ajax({
+                url: 'services/service?method=setting.get&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log("got it: " + data.length);
+                    data.forEach(function (serverSetting) {
+                        // find which control it relates to
+                        settings.forEach(function (setting) {
+
+
+                            if (serverSetting.xpath == setting.xpath) {
+                                // handle textboxes
+                                if (setting.hasOwnProperty('textbox')) {
+                                    $(setting.textbox).val(serverSetting.value);
+                                }
+                                // handle number fields
+                                else if (setting.hasOwnProperty('number')) {
+                                    $(setting.number).val(serverSetting.value);
+                                }
+                                // handle number fields
+                                else if (setting.hasOwnProperty('label')) {
+                                    $(setting.label).text(serverSetting.value);
+                                }
+                                // handle checkboxes
+                                else if (setting.hasOwnProperty('checkbox')) {
+                                    if (setting.hasOwnProperty('inverse')) {
+                                        if (setting.inverse) {
+                                            if (serverSetting.value == "false") {
+                                                $(setting.checkbox).attr("checked", "checked");
+                                            }
+                                        }
+                                        else if (serverSetting.value == "true") {
+                                            $(setting.checkbox).attr("checked", "checked");
+                                        }
+                                    }
+                                    else if (serverSetting.value == "true") {
+                                        $(setting.checkbox).attr("checked", "checked");
+                                    }
+                                }
+                            }
+                        });
+                    });
+                },
+                error: function (error) {
+                    // show user the error
+                    alert('Unexpected error loading settings!');
+                }
+            });
+        }
+
+        function updated(setting) {
+
+            var toSave = []
+
+            var xpath = setting.xpath;
+            var value = null;
+
+            // handle textboxes
+            if (setting.hasOwnProperty('textbox')) {
+                value = $(setting.textbox).val()
+            }
+            // handle number fields
+            else if (setting.hasOwnProperty('number')) {
+                value = $(setting.number).val();
+                if (value == "") {
+                    value = null;
+                }
+            }
+            // handle checkboxes
+            else if (setting.hasOwnProperty('checkbox')) {
+                value = "false";
+                if ($(setting.checkbox).is(":checked")) {
+                    value = "true";
+                }
+                if (setting.hasOwnProperty('inverse')) {
+                    if (setting.inverse) {
+                        if (value == "true") {
+                            value = "false";
+                        } else {
+                            value = "true";
+                        }
+                    }
+                }
+            }
+
+            if (value != null) {
+                toSave.push({ xpath: xpath, value: value });
+            }
+
+            // post save request to server
+            var json = JSON.stringify(toSave);
+            $.ajax({
+                url: 'services/service?method=setting.set&format=json',
+                type: 'POST',
+                data: json,
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log(setting.xpath + " saved");
+                },
+                error: function (error) {
+                    // show user the error
+                    console.log("failed to save updated " + setting.xpath);
+                }
+            })
+        }
+
+        function handleUpdates() {
+            // collect list of settings we need to request from server
+            settings.forEach(function (setting) {
+
+                // handle textboxes
+                if (setting.hasOwnProperty('textbox')) {
+                    $(setting.textbox).change(function () {
+                        updated(setting);
+                    });
+                }
+                // handle number fields
+                else if (setting.hasOwnProperty('number')) {
+                    $(setting.number).change(function () {
+                        updated(setting);
+                    });
+                }
+                // handle checkboxes
+                else if (setting.hasOwnProperty('checkbox')) {
+                    $(setting.checkbox).change(function () {
+                        updated(setting);
+                    });
+                }
+
+            });
+        }
+
+        function showMessage(title, body) {
+            var messageModal = app.__vue__.$refs.messageModal;
+            messageModal.showMessage(title, body);
+        }
+
+        function promptForUpdateEPG() {
+            //var messageModal = app.__vue__.$refs.messageModal;
+            //messageModal.showMessage("Update EPG", "You channel lineup has changed. Would you like to update the EPG now?");
+        }
+
+        function editUser(user) {
+            console.log("edit user: " + user.name);
+            var editUserModal = app.__vue__.$refs.editUserModal;
+            editUserModal.show(user);
+        }
+
+    </script>
+</body>
+</html>

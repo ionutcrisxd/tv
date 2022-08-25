@@ -1,0 +1,236 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="vendor/datetime/tempusdominus-bootstrap-4.min.css" />
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <div class="pad-left-extra pad-right-extra">
+            <div class="row">
+                <div class="col-lg-2 col-md-3 col-sm-6 col-minpad">
+                    <input class="form-control" type="text" id="titleText" placeholder="Title text" autofocus>
+                </div>
+                <div id="subtitleFilter" class="col-lg-2 col-md-3 col-sm-6 col-minpad d-none">
+                    <input class="form-control" type="text" id="subtitleText" placeholder="Subtitle text" autofocus>
+                </div>
+                <div id="descriptionFilter" class="col-lg-2 col-md-3 col-sm-6 col-minpad d-none">
+                    <input class="form-control" type="text" id="descriptionText" placeholder="Desc text" autofocus>
+                </div>
+                <div id="genreFilter" class="col-lg-2 col-md-3 col-sm-6 col-minpad d-none">
+                    <select id="genre" class="form-control" data-container="body">
+                        <option value='any'>Any Genre</option>";
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-8 col-sm-12 col-minpad">
+                    <button id="searchButton" class='btn btn-secondary'>
+                        <i class="fa fa-search"></i> Search Guide
+                    </button>
+                    &nbsp;
+                    <button id="advancedRecButton" class='btn btn-danger d-none'>
+                        <i class="fa fa-plus-circle"></i> Create Recording
+                    </button>
+                    &nbsp;
+                    <button id="moreButton" class='btn btn-light'>
+                        <i class="fas fa-chevron-circle-down"></i> More Options
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <hr />
+        <listings_list ref="listingList"></listings_list>
+        <listing_details_modal ref="detailsModal"></listing_details_modal>
+        <show_message_modal ref="messageModal"></show_message_modal>
+        <advanced_record_modal ref="advancedRecordModal"></advanced_record_modal>
+        <manual_record_modal ref="manualRecordModal"></manual_record_modal>
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="components/page-header.js"></script>
+    <script src="components/listings-list.js"></script>
+    <script src="components/listing-details-modal.js"></script>
+    <script src="components/advanced-record-modal.js"></script>
+    <script src="components/show-message-modal.js"></script>
+    <script src="components/manual-record-modal.js"></script>
+    <script src="vendor/bootstrap/bootstrap-select.min.js"></script>
+    <script src="vendor/datetime/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script>
+        var showNewIndicator = false;
+        var showingMoreOptions = false;
+
+        window.addEventListener("load", function (event) {
+            $("#nav-search").addClass("active");
+            checkSession();
+
+            var url = 'services/service?method=setting.get&key=/Settings/General/ShowNewInGuide';
+            $.getJSON(url, function (data) {
+                if (data.value == "true") {
+                    showNewIndicator = true;
+                }
+            });
+
+            var url = 'services/service?method=system.genre';
+            $.getJSON(url, function (data) {
+                var genre = $("#genre");
+                for (i = 0; i < data.length; i++) {
+                    genre.append("<option value='" + data[i].name + "'>" + data[i].name + "</option>");
+                }
+            });
+
+            // 'more options'
+            $("#moreButton").click(function () {
+                if (showingMoreOptions) {
+                    $("#subtitleFilter").addClass('d-none');
+                    $("#descriptionFilter").addClass('d-none');
+                    $("#genreFilter").addClass('d-none');
+                    $("#advancedRecButton").addClass('d-none');
+                    $("#moreButton").html('<i class="fas fa-chevron-circle-down"></i> More Options');
+                    showingMoreOptions = false;
+                } else {
+                    $("#subtitleFilter").removeClass('d-none');
+                    $("#descriptionFilter").removeClass('d-none');
+                    $("#genreFilter").removeClass('d-none');
+                    $("#advancedRecButton").removeClass('d-none');
+                    $("#moreButton").html('<i class="fas fa-chevron-circle-up"></i> Less Options');
+                    showingMoreOptions = true;
+                }
+            });
+
+            // advanced
+            $("#advancedRecButton").click(function () {
+                createAdvancedRecording();
+            });
+
+            // handle filter changes
+            $("#searchButton").click(function () {
+                doSearch();
+            });
+
+            $(document).keyup(function (e) {
+                if ($("#titleText").is(":focus") && (e.keyCode == 13)) {
+                    doSearch();
+                }
+                if ($("#subtitleFilter").is(":focus") && (e.keyCode == 13)) {
+                    doSearch();
+                }
+                if ($("#descriptionFilter").is(":focus") && (e.keyCode == 13)) {
+                    doSearch();
+                }
+            });
+
+            // set default focus
+            $("#titleText").focus();
+        });
+
+        function listingClicked(listing) {
+            var component = app.__vue__.$refs.detailsModal;
+            component.show(listing);
+        }
+
+        function showMessage(title, body) {
+            var messageModal = app.__vue__.$refs.messageModal;
+            messageModal.showMessage(title, body);
+        }
+
+        function createAdvancedRecording() {
+            var sql = "";
+
+            var titleText = $('#titleText').val();
+            if (titleText.length > 0) {
+                titleText = titleText.replace(/'/g, "''");                
+                sql += "title like '%" + titleText + "%'";
+            }
+
+            var subtitleText = $('#subtitleText').val();
+            if (subtitleText.length > 0) {
+                subtitleText = subtitleText.replace(/'/g, "''");
+                if (sql.length > 0) sql += " and ";
+                sql += "subtitle like '%" + subtitleText + "%'";
+            }
+
+            var descriptionText = $('#descriptionText').val();
+            if (descriptionText.length > 0) {
+                descriptionText = descriptionText.replace(/'/g, "''");
+                if (sql.length > 0) sql += " and ";
+                sql += "description like '%" + descriptionText + "%'";
+            }
+
+            var genre = $('#genre').val();
+            if (genre !== 'any') {
+                if (sql.length > 0) sql += " and ";
+                sql += "genres like '%" + genre + "%'";
+            }
+
+            var manualRecordModal = app.__vue__.$refs.manualRecordModal;
+            manualRecordModal.show(sql);
+        }
+
+        function doSearch() {
+            var url = 'services/service?method=channel.listings.search&format=json';
+
+            // post save request to server
+            var titleText = $('#titleText').val();
+            if (titleText.length > 0) {
+                url += '&title=' + encodeURIComponent('%' + titleText + '%');
+            }
+
+            // 'more options'
+            if (showingMoreOptions) {
+                var subtitleText = $('#subtitleText').val();
+                if (subtitleText.length > 0) {
+                    url += '&subtitle=' + encodeURIComponent('%' + subtitleText + '%');
+                }
+
+                var descriptionText = $('#descriptionText').val();
+                if (descriptionText.length > 0) {
+                    url += '&description=' + encodeURIComponent('%' + descriptionText + '%');
+                }
+
+                var genre = $('#genre').val();
+                if (genre !== 'any') {
+                    url += '&genre=' + encodeURIComponent(genre);
+                }
+            }
+
+            if ((titleText.length > 0 || subtitleText.length > 0 || descriptionText.length > 0) || genre != "any") {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    contentType: 'application/json',
+                    success: function (data) {
+                        app.__vue__.$refs.listingList.showListings(data.listings);
+                        if (data.listings.length == 0) {
+                            showMessage('Search', 'No matching shows found!');
+                        }
+                    },
+                    error: function (error) {
+                        // show user the error
+                        alert('Unexpected error performing search!');
+                    }
+                });
+            }
+        }
+
+        function reloadRecordings() {
+            doSearch();
+        }
+
+    </script>
+</body>
+</html>

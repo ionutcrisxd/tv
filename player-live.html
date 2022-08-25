@@ -1,0 +1,1461 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Player</title>
+
+    <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="player.css">    
+    <link href="vendor/font-awesome/css/all.min.css" type="text/css" rel="stylesheet">    
+    
+    <style type="text/css">
+        .container {
+            width: 100%;            
+            margin: 0px auto;
+        }
+
+        video {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .btn {
+            padding: 6px 6px;
+            margin: 1px;
+        }
+
+        .hidden-player {
+            display: none;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <page_header></page_header>
+
+        <div class="container vidcontainer" id="video_container">
+            <div id="streamInfo" class="nplayer-stream-info-overlay">
+                <table id="streamInfoTable" class="table">
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <div id="metadata" class="nplayer-metadata">
+                <img id="poster" class="nplayer-poster" onerror="posterLoadError(this);" />
+                <div id="period" class="nplayer-period"></div>
+                <div class="nplayer-info">
+                    <h5 id="channel" class="text-primary"></h5><h5 id="title"></h5>
+                    <p id="description" class="text-secondary"></p>
+                </div>
+            </div>
+            <div id="liveChannels" class="nplayer-channels">
+                <live_channels_list ref="liveChannels"></live_channels_list>
+            </div>
+            <div id="controls" class="nplayer-controls d-none">
+                <!-- top line of playback controls -->
+                <div class="nplayer-current-time no-select" id="current-time">00:00:00</div>
+                <div class="nplayer-timeline no-select" id="timeline"></div>
+                <div class="nplayer-timeline-played"></div>
+                <div class="nplayer-timeline-scrubber d-none" id="scrubber"></div>
+                <div class="nplayer-total-time no-select" id="total-time">00:00:00</div>
+
+                <!-- bottom line of playback controls -->
+                <div class="nplayer-play-pause"><i class="fa fa-pause fa-2x"></i></div>
+                <div class="nplayer-volume"><i class="fa fa-volume-up fa-2x"></i></div>
+                <div class="nplayer-back" id="skipForward"><i class="fas fa-step-backward fa-2x"></i></div>
+                <div class="nplayer-forward" id="skipBack"><i class="fas fa-step-forward fa-2x"></i></div>
+                <div class="nplayer-stop" id="stop"><i class="fa fa-stop fa-2x"></i></div>
+                <div class="nplayer-status text-center"><strong id="statusMessage"></strong></div>
+                <div class="nplayer-stream-info"><i class="fas fa-info-circle fa-2x"></i></div>
+                <div class="nplayer-settings"><i class="fas fa-cog fa-2x"></i></div>
+                <div class="nplayer-subtitles"><i class="fas fa-closed-captioning fa-2x"></i></div>
+                <div class="nplayer-fullscreen"><i class="fas fa-expand fa-2x"></i></div>
+            </div>
+            <video id="video_1" name="videoElement" class="video-js vjs-default-skin hidden-player" autoplay preload="none" poster="video.png"
+                   data-setup="{}" muted>
+                Your browser is too old and doesn't support HTML5 video.
+            </video>
+        </div>
+        <hr />
+        <div class="">
+            <p class="col-12 text-center">
+                <a class="btn btn-light" data-toggle="collapse" href="#collapsePlaybackInfo" role="button" aria-expanded="false" aria-controls="collapsePlaybackInfo">
+                    How else can I watch my live tv and recordings?
+                </a>
+            </p>
+            <div class="collapse" id="collapsePlaybackInfo">
+                <div class="card card-body">
+                    <p>
+                        <span class="text-light"></span>Some of the most common ways to watch include: NextPVR.exe (on Windows), NLite, Kodi, VLC, or
+                        the NextPVR applications on the iOS / Android app stores. For more information see <a href="http://nextpvr.com/download.html">http://nextpvr.com/download.html</a>
+                    </p>
+                    <p>The native stream can be watched in VLC or other players using this network URL: <a id="streamURL" href="http://nextpvr.com/download.html">http://nextpvr.com/download.html</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- modal popup for showing selected show -->
+        <div class="modal fade" id="StreamSettingsModal" tabindex="-1" role="dialog" aria-labelledby="StreamSettingsLabel">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="advancedRecordModalTitle">Stream Settings</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="modalDescription">
+
+                        <div class="row">
+                            <div class="col-1"></div>
+                            <div class="col-3 setting-label">Audio Stream:</div>
+                            <div class="col-8">
+                                <select class="custom-select col-6" id="audioStream">
+                                    <option>Default</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <br />
+
+                        <div class="row">
+                            <div class="col-1"></div>
+                            <div class="col-3 setting-label">Subtitle Stream:</div>
+                            <div class="col-8">
+                                <select class="custom-select col-6" id="subtitleStream">
+                                    <option>Default</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+
+                        <button type="button" class="btn btn-primary float-left" id="applyButton">Apply &amp; Restart</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="vendor/vue/vue.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="vendor/bootstrap/bootstrap.min.js"></script>
+    <script src="js/hls.min.js"></script>
+
+    <script src="components/page-header.js"></script>
+    <script src="components/live-channels-list.js"></script>
+    <script src="js/utility.js"></script>
+
+    <script src="mpegts.js"></script>
+
+    <script>
+        var liveMode = false;
+        var channel = null;
+        var channel_id = 0;
+        var vod_id = null;
+        var aspectRatio = 9 / 16;
+        var startupURL = null;
+        var statusURL = null;
+        var playbackURL = null;
+        var stopURL = null;
+        var leaseURL = null;
+        var statusTimer = 0;
+        var leaseTimer = 0;
+        var controlsTimer = 0;
+        var startSeconds = 0;
+        var durationSeconds = 1;
+        var slipSeconds = 1200;
+
+        var nativelyStreamable = false;
+
+        var streamStartTime = new Date();
+
+        var paused = true;
+        var muted = false;
+        var fullscreen = false;
+        var controlsHidden = false;
+        var mouseLocation = null;
+        var dragging = false;
+        var hideTime = 0;
+        var seeking = false;
+
+        var metadataExpiry = 0;
+        var lastPosition = 0;
+        var liveSeekSecondsBackFromLive = -1;
+        var urlExtras = "";
+
+        window.addEventListener("load", function (event) {
+
+            window.HELP_IMPROVE_VIDEOJS = false;
+            var baseURL = window.location.origin;
+
+            // we have slightly different behavior if live vs recording
+            liveMode = false;
+            if (getParameterByName("channel_id", null) != null) {
+                liveMode = true;
+                channel_id = getParameterByName("channel_id", null);
+            }
+
+
+            //$("#title").text(getParameterByName("title", ""));
+
+            $(".nplayer-channels").hide();
+
+
+            // setup video player
+            //var player = videojs('video_1');
+            //$("#controls").detach().appendTo(".vidcontainer");
+            updateControls();
+
+            //$("#metadata").detach().appendTo(".vidcontainer");
+            updateMetadata();
+
+            // setup for live tv platback
+            if (getParameterByName("channel_id", null) != null) {
+                $("#skipForward").hide();
+                $("#skipBack").hide();
+                $("#stop").css("left", "118px");
+
+                channel_id = getParameterByName("channel_id", null);
+
+                // urls
+                //startupURL = "services/service?method=channel.stream.start&channel_id=" + channel_id;
+                startupURL = null;
+                statusURL = "services/service?method=channel.transcode.status&format=json";
+                playbackURL = "live?channel_id=" + channel_id + "&profile=fast264";                
+                //stopURL = "services/service?method=channel.stream.stop";
+                stopURL = null;
+                //leaseURL = "services/service?method=channel.transcode.lease";
+                leaseURL = null;
+
+                var avoidTranscodeWherePossible = localStorage.getItem('avoidTranscodeWherePossible');
+                if (avoidTranscodeWherePossible == "false") {
+                    startupURL += "&force=true";
+                }
+
+                // display some useful info
+                var url = baseURL + "/live?channel_id=" + channel_id;
+                $("#streamURL").attr("href", url);
+                $("#streamURL").text(url);
+
+                // get slip buffer seconds
+                var url = 'services/service?method=setting.get&key=/Settings/General/SlipSeconds';
+                $.getJSON(url, function (data) {
+                    slipSeconds = parseInt(data.value);
+                    console.log("SlipSeconds=" + slipSeconds);
+                });
+
+                // live tv channel selector on mouse wheel
+                $('html').bind('mousewheel', function (e) {
+                    //$("#controls").removeClass("d-none");
+                    //$(".nplayer-channels").fadeIn();
+                    showControls();
+                });
+                $('#video_1').bind('mousewheel', function (e) {
+                    //$("#controls").removeClass("d-none");
+                    //$(".nplayer-channels").fadeIn();
+                    showControls();
+                });
+            }
+            // handle missing parameters
+            else {
+                // invalid...
+                alert("No channel_id specified!!");
+                //window.location.href = 'index.html';
+                return;
+            }
+
+            var preferredStreamingProfile = localStorage.getItem('preferredStreamingProfile');
+            if (preferredStreamingProfile != null) {
+                startupURL += "&profile=" + encodeURIComponent(preferredStreamingProfile);
+            }
+
+            // make controls visible
+            $("#controls").removeClass("d-none");
+
+            // show title
+            if (getParameterByName("channel_id", null) != null) {
+                if (getParameterByName("title", null) != null) {
+                    $("#channel").text(getParameterByName("title", null));
+                }
+            } else if (getParameterByName("title", null) != null) {
+                $("#title").text(getParameterByName("title", null));
+            }
+            // make sure video window is appropriately sized
+            resizePlayer();
+            $("#video_1").removeClass("hidden-player");
+
+            // controls
+            $(".nplayer-play-pause").click(function (event) {
+                event.stopPropagation();
+                togglePause();
+            });
+            $(".nplayer-volume").click(function (event) {
+                event.stopPropagation();
+                toggleVolume();
+            });
+            $(".nplayer-settings").click(function (event) {
+                event.stopPropagation();
+                viewSettings();
+            });
+            $(".nplayer-fullscreen").click(function (event) {
+                event.stopPropagation();
+                toggleFullscreen();
+            });
+            $(".nplayer-forward").click(function (event) {
+                event.stopPropagation();
+                skipForward();
+            });
+            $(".nplayer-backward").click(function (event) {
+                event.stopPropagation();
+                skipBack();
+            });
+            $(".nplayer-stop").click(function (event) {
+                event.stopPropagation();
+                stop();
+                history.go(-1);
+            });
+            $(".nplayer-stream-info").click(function (event) {
+                if ($(".nplayer-stream-info-overlay").is(':visible')) {
+                    $(".nplayer-stream-info-overlay").fadeOut();
+                } else {
+                    $("#streamInfoTable > tbody").empty();
+                    // get stream info
+                    var infoURL = 'service?method=recording.info&recording_id=' + recording_id;
+                    if (channel_id != 0) {
+                        infoURL = 'service?method=channel.info';
+                    }
+                    $.getJSON(infoURL, function (result) {
+                        console.log("got it");
+                        result.forEach(function (item) {
+                            $("#streamInfoTable > tbody").append("<tr><td width='20%'>" + item.key + "</td><td>" + item.value + "</td></tr>");
+                        });
+                        $(".nplayer-stream-info-overlay").fadeIn();
+                        setTimeout(() => {
+                            $(".nplayer-stream-info-overlay").fadeOut();
+                        }, 10000);
+                    });
+                }
+            });
+            $(".nplayer-subtitles").click(function (event) {
+                var player = document.getElementById('video_1');
+                if (player.textTracks[0].mode == 'showing')
+                    player.textTracks[0].mode = 'hidden';
+                else
+                    player.textTracks[0].mode = 'showing';
+            });
+
+            // handle keyboard events
+            $("body").keydown(function (event) {
+                if (event.key == " ") // space
+                {
+                    togglePause();
+                    event.stopPropagation();
+                }
+            });
+
+            // fade in/out OSD controls
+            $("#video_1").click(function (event) {
+                if (seeking == false) {
+                    /*
+                    if (controlsHidden) {
+                        controlsHidden = false;
+                        $("#controls").fadeIn();
+                        hideTime = Date.now() + 4000;
+                    } else {
+                        hideTime = Date.now();
+                    }*/
+                    togglePause();
+                    if (paused == false) {
+                        controlsHidden = false;
+                        $("#controls").fadeIn();
+                        hideTime = Date.now() + 10000;
+                    }
+                }
+            });
+            // fade in on mouse movement
+            $("#video_1").mousemove(function (event) {
+                showControls();
+
+                //var msg = "Handler for .mousemove() called at ";
+                //msg += event.pageX + ", " + event.pageY;
+                //console.log(msg);
+
+                mouseLocation = { x: event.pageX, y: event.pageY };
+
+                if (liveMode) {
+                    var width = $("#video_1").width();
+                    var height = $("#video_1").height();
+                    if ((event.pageY < 180) && (event.pageX > (width - 180))) {
+                        if ($("#liveChannels").css('display') == 'none') {
+                            var component = app.__vue__.$refs.liveChannels;
+                            component.clearFilter();
+                            $(".nplayer-channels").fadeIn();
+                            showControls();
+                        }
+                    }
+                }
+            });
+
+            // handle stream selection
+            $("#applyButton").click(function (event) {
+                pause();
+                $('#sdPassword').val()
+                urlExtras = "";
+                if ($('#audioStream').val() != "0") {
+                    urlExtras = '&audio_stream=' + $('#audioStream').val();
+                }
+                if ($('#subtitleStream').val() != "0") {
+                    urlExtras = '&subtitle_stream=' + $('#audioStream').val();
+                }
+                start();
+            });
+
+            // show scrubber
+            $("#scrubber").removeClass("d-none");
+
+            // detect the user pressing 'esc' to exit fullscreen
+            document.addEventListener("fullscreenchange", function () {
+                fullscreenStatus(document.fullscreen);
+            }, false);
+            document.addEventListener("mozfullscreenchange", function () {
+                fullscreenStatus(document.mozFullScreen);
+            }, false);
+            document.addEventListener("webkitfullscreenchange", function () {
+                fullscreenStatus(document.webkitIsFullScreen);
+            }, false);
+
+
+            var resume = getParameterByName("resume", "");
+            if (resume != "") {
+                startSeconds = parseInt(resume, 10);
+            }
+            start();
+        });
+
+        function showControls() {
+            if (hideTime == 0) {
+                controlsHidden = false;
+                $("#controls").fadeIn();
+                $(".nplayer-metadata").fadeIn();
+                updateControls();
+
+                if (metadataExpiry != 0) {
+                    if (metadataExpiry < Date.now()) {
+                        updateMetadata();
+                    }
+                }
+            }
+            hideTime = Date.now() + 2500;
+        }
+
+        function startChannel(channel) {
+            var player = document.getElementById('video_1');
+            player.pause();
+            $('.nplayer-play-pause').html('<i class="fa fa-pause"></i>');
+
+            this.channel = channel;
+            channel_id = channel.channelId;
+            updateMetadata();
+
+            playbackURL = "live?channel_id=" + channel_id + "&profile=fast264";
+
+            console.log("starting channel_oid " + channel_id);
+            //startupURL = "services/service?method=channel.transcode.initiate&channel_id=" + channel_id;
+            startupURL = null;
+            start();
+            showControls();
+            hideTime = Date.now() + 7500;
+        }
+
+        function setupNavigation() {
+            // handle timeline user for live tv playback (hls skippable stream)
+            if (liveMode) {
+                // live tv playback
+                var isDragging = false;
+                var divPos = {};
+                $("#controls")
+                    .mousemove(function (e) {
+                        if (isDragging) {
+                            var offset = $("#timeline").offset();
+                            var width = $("#timeline").width();
+                            divPos = {
+                                left: e.pageX - offset.left,
+                                top: e.pageY - offset.top
+                            };
+                            var percent = 0;
+                            if (e.pageX < offset.left) {
+                                percent = 0;
+                            }
+                            else if (e.pageX < (offset.left + width)) {
+                                percent = ((100.0 / width) * (e.pageX - offset.left));
+                                liveSeekSecondsBackFromLive = slipSeconds - ((slipSeconds / 100.0) * percent);
+                                //startSeconds = ((durationSeconds / 100.0) * percent);
+                                console.log("percent " + percent);
+
+                                var player = document.getElementById('video_1');
+                                var duration = player.duration;
+                                var seekTo = duration - liveSeekSecondsBackFromLive;
+                                if (seekTo < 0)
+                                    seekTo = 0;
+                                console.log("seeking to " + seekTo + " (duration=" + duration + ")");
+                                player.currentTime = seekTo;
+
+
+                            }
+                            updateControls();
+                        }
+                    })
+                    .mouseup(function (e) {
+                        e.stopPropagation();
+                        if (isDragging) {
+                            isDragging = false;
+                            if (paused) {
+                                play();
+                            }
+
+                            liveSeekSecondsBackFromLive = -1;
+                        } else {
+                            // simple click on timeline
+                            var offset = $("#timeline").offset();
+                            var width = $("#timeline").width();
+                            if (e.pageY < (offset.top + 15)) {
+                                percent = ((100.0 / width) * (e.pageX - offset.left));
+                                var secondsBackFromLive = slipSeconds - ((slipSeconds / 100.0) * percent);
+                                var player = document.getElementById('video_1');
+                                var duration = player.duration;
+                                var seekTo = duration - secondsBackFromLive;
+                                if (seekTo < 0)
+                                    seekTo = 0;
+                                console.log("seeking to " + seekTo + " (duration=" + duration + ")");
+                                player.currentTime = seekTo;
+                            }
+                        }
+                    });
+                $(".nplayer-timeline-scrubber")
+                    .mousedown(function (e) {
+                        e.stopPropagation();
+                        isDragging = true;
+                    })
+                    .mouseup(function (e) {
+                        e.stopPropagation();
+                        isDragging = false;
+                        liveSeekSecondsBackFromLive = -1;
+                    });
+            }
+            // handle playback of natively streamable content (ie, pre-transcoded hls content)
+            else if (nativelyStreamable) {
+                var isDragging = false;
+                var divPos = {};
+                $("#controls")
+                    .mousemove(function (e) {
+                        if (isDragging) {
+                            var offset = $("#timeline").offset();
+                            var width = $("#timeline").width();
+                            divPos = {
+                                left: e.pageX - offset.left,
+                                top: e.pageY - offset.top
+                            };
+                            var percent = 0;
+                            if (e.pageX < offset.left) {
+                                percent = 0;
+                            }
+                            else if (e.pageX < (offset.left + width)) {
+                                var player = document.getElementById('video_1');
+                                var duration = player.duration;
+                                percent = ((100.0 / width) * (e.pageX - offset.left));
+                                seekTo = ((duration / 100.0) * percent);
+                                var player = document.getElementById('video_1');
+                                console.log("seeking to " + seekTo + " (duration=" + duration + ")");
+                                player.currentTime = seekTo;
+                            }
+                            updateControls();
+                        }
+                    })
+                    .mouseup(function (e) {
+                        e.stopPropagation();
+                        if (isDragging) {
+                            isDragging = false;
+                            if (paused) {
+                                play();
+                            }
+
+                            liveSeekSecondsBackFromLive = -1;
+                        } else {
+                            // simple click on timeline
+                            var offset = $("#timeline").offset();
+                            var width = $("#timeline").width();
+                            if (e.pageY < (offset.top + 15)) {
+                                var player = document.getElementById('video_1');
+                                var duration = player.duration;
+                                percent = ((100.0 / width) * (e.pageX - offset.left));
+                                seekTo = ((duration / 100.0) * percent);
+                                var player = document.getElementById('video_1');
+                                console.log("seeking to " + seekTo + " (duration=" + duration + ")");
+                                player.currentTime = seekTo;
+                            }
+                        }
+                    });
+                $(".nplayer-timeline-scrubber")
+                    .mousedown(function (e) {
+                        e.stopPropagation();
+                        isDragging = true;
+                    })
+                    .mouseup(function (e) {
+                        e.stopPropagation();
+                        isDragging = false;
+                        liveSeekSecondsBackFromLive = -1;
+                    });
+            }
+
+            // else handle playback of recordings that need transcoding on the fly (ie, stop and restart the transcoding each time the user skips)
+            else {
+                var isDragging = false;
+                var divPos = {};
+                $("#controls")
+                    .mousemove(function (e) {
+                        if (isDragging) {
+                            var offset = $("#timeline").offset();
+                            var width = $("#timeline").width();
+                            divPos = {
+                                left: e.pageX - offset.left,
+                                top: e.pageY - offset.top
+                            };
+                            var percent = 0;
+                            if (e.pageX < offset.left) {
+                                percent = 0;
+                            }
+                            else if (e.pageX < (offset.left + width)) {
+                                percent = ((100.0 / width) * (e.pageX - offset.left));
+                                startSeconds = ((durationSeconds / 100.0) * percent);
+                                console.log("percent " + percent);
+                            }
+                            updateControls();
+                        }
+                    })
+                    .mouseup(function (e) {
+                        e.stopPropagation();
+                        if (isDragging) {
+                            isDragging = false;
+                            if (paused) {
+                                start();
+                            }
+                        } else {
+                            // simple click on timeline
+                            var offset = $("#timeline").offset();
+                            var width = $("#timeline").width();
+                            if (e.pageY < (offset.top + 15)) {
+                                percent = ((100.0 / width) * (e.pageX - offset.left));
+                                startSeconds = ((durationSeconds / 100.0) * percent);
+                                console.log("seeking to " + startSeconds);
+                                pause();
+                                start();
+                                seeking = true;
+                            }
+                        }
+                    });
+                $(".nplayer-timeline-scrubber")
+                    .mousedown(function (e) {
+                        e.stopPropagation();
+                        isDragging = true;
+                        pause();
+                    })
+                    .mouseup(function (e) {
+                        e.stopPropagation();
+                        isDragging = false;
+                        if (paused) {
+                            start();
+                        }
+                    });
+            }
+        }
+
+        function _callback_onAutoplayBlocked() {
+            // do something, for example "show big play button"
+            console.log("_callback_onAutoplayBlocked");
+            $("#statusMessage").text("Browser blocked video playback");
+            $("#statusMessage").addClass("text-danger");
+        }
+
+        function updateMetadata() {
+            // default status message
+            $("#statusMessage").text("");
+
+            // artwork
+            if (getParameterByName("vod_artwork", null) != null) {
+                var posterArtURL = getParameterByName("vod_artwork", null);
+                $('#poster').attr('src', posterArtURL);
+
+            } else if (getParameterByName("recording_id", null) != null) {
+                var recording_id = getParameterByName("recording_id", null);
+
+                // update poster
+                posterArtURL = 'services/service?method=recording.artwork&recording_id=' + recording_id;
+                $('#poster').attr('src', posterArtURL);
+
+                // update
+                var infoURL = 'services/service?method=recording.list&recording_id=' + recording_id;
+                $.getJSON(infoURL, function (result) {
+                    var recording = result.recordings[0];
+                    $('#description').text(recording.desc)
+
+                    var startTime = new Date(recording.startTime * 1000);
+                    var duration = recording.duration;
+                    var endTime = new Date(startTime.getTime() + 1000 * duration);
+                    recording.period = startTime.toLocaleDateString() + ' ' + startTime.toLocaleTimeString() + ' - ' + endTime.toLocaleTimeString();
+                    $('#period').text(recording.period)
+                });
+
+            } else if (getParameterByName("channel_id", null) != null) {
+
+                // update
+                var infoURL = 'services/service?method=channel.listings.current&channel_id=' + channel_id;
+                $.getJSON(infoURL, function (result) {
+                    if (result.length > 0 && result[0].channel.listings.length > 0) {
+                        var listing = result[0].channel.listings[0];
+
+                        // update poster
+                        posterArtURL = 'services/service?method=channel.show.artwork&event_id=' + listing.id;
+                        $('#poster').attr('src', posterArtURL);
+
+
+                        $('#channel').text(result[0].channel.channel_formatted_number + " - " + result[0].channel.channel_name)
+                        $('#title').text(listing.name)
+                        $('#description').text(listing.description)
+
+                        var episodeStartTime = new Date(listing.start * 1000);
+                        var episodeEndTime = new Date(listing.end * 1000);
+                        var period = '' + episodeStartTime.toLocaleDateString() + ' ' + episodeStartTime.toLocaleTimeString() + ' - ' + episodeEndTime.toLocaleTimeString();
+                        $('#period').text(period);
+
+                        metadataExpiry = episodeEndTime;
+                    } else {
+
+                        if (channel != null) {
+                            $('#channel').text(channel.channelName);
+                            $('#description').text("No guide information available");
+                        } else {
+                            $('#description').text("No guide information available");
+                        }
+
+                        $('#poster').attr('src', 'services/service?method=channel.icon&channel_id=' + channel_id);
+                        $('#poster').css({ "object-fit": "scale-down" });
+
+                        // try again in a minute
+                        metadataExpiry = Date.now() + 60000;
+                    }
+                });
+            }
+        }
+
+        function checkAutoPlay(p) {
+            var s = window['Promise'] ? window['Promise'].toString() : '';
+
+            if (s.indexOf('function Promise()') !== -1 || s.indexOf('function ZoneAwarePromise()') !== -1) {
+                p.catch(function (error) {
+                    console.error("_checkAutoPlay, error:", error)
+                    if (error.name == "NotAllowedError") { // For Chrome/Firefox
+                        console.error("_checkAutoPlay: error.name:", "NotAllowedError")
+                        _callback_onAutoplayBlocked();
+                    } else if (error.name == "AbortError" && isSafari()) {  // Only for Safari
+                        console.error("_checkAutoPlay: AbortError (Safari)")
+                        _callback_onAutoplayBlocked();
+                    } else {
+                        console.error("_checkAutoPlay: happened something else ", error);
+                        // throw error; // happened something else
+                    }
+                }).then(function () {
+                    console.log("_checkAutoPlay: then");
+                    // Auto-play started
+                });
+            } else {
+                console.error("_checkAutoplay: promise could not work in your browser ", p);
+            }
+        }
+
+        function start() {
+            if (startupURL != null) {
+                //$("#statusMessage").text("Starting...");
+                $("#statusMessage").removeClass("text-danger");
+
+                $('.nplayer-play-pause').html('<i class="fa fa-pause fa-2x"></i>');
+                paused = false;
+
+                if (controlsTimer != 0) {
+                    clearInterval(controlsTimer);
+                    controlsTimer = 0;
+                }
+
+                var url = startupURL;
+                if (startSeconds != 0) {
+                    url += "&seek=" + Math.round(startSeconds);
+                }
+                url += urlExtras;
+
+                // do request
+                $.ajax({
+                    url: url,
+                    headers: {
+                        Accept: "application/json",
+                    },
+                    crossDomain: true,
+                    type: 'get',
+                    async: true,
+                    success: function (response, textStatus, xhr) {
+                        console.log(response);
+
+                        if (vod_id != null) {
+                            console.log("starting VOD playback...");
+                            nativelyStreamable = true;
+                            playbackURL = response.url;
+                            setupNavigation();
+                            if (getParameterByName("delay", null) != null) {
+                                setTimeout(() => {
+                                    startPlayback(playbackURL);
+                                }, 12000);
+                            }
+                            else {
+                                startPlayback(playbackURL);
+                            }
+                            return;
+                        }
+
+                        if (response.stat.toLowerCase() == "failed") {
+                            $("#statusMessage").addClass("text-danger");
+                            $("#statusMessage").text(response.msg);
+                        } else {
+                            console.log("started");
+                            if (response.hasOwnProperty("url")) {
+                                // this indicates a video is likely able to be played natively in the browser
+                                console.log("attempting native browser playback...");
+                                nativelyStreamable = true;
+                                playbackURL = response.url;
+                                setupNavigation();
+                                startPlayback(playbackURL);
+                            } else {
+                                // otherwise we're waiting for the transcode
+                                statusTimer = setInterval(checkStatus, 500);
+                            }
+                        }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        var message = 'Error starting transcode: ' + textStatus + ": " + errorThrown;
+                        console.log(message);
+                        $("#statusMessage").text(message);
+                    }
+                });
+
+                controlsTimer = self.setInterval(updateControls, 500);
+            }
+            else if (playbackURL != null) {
+                setupNavigation();
+                //startPlayback(playbackURL);
+                player_load(playbackURL);
+            }
+        }
+
+        function callback_onAutoplayBlocked() {
+            // do something, for example "show big play button"
+            console.log("blocked");
+        }
+
+        function player_load(playbackURL) {
+            console.log('isSupported: ' + mpegts.isSupported());
+            /*
+            if (mediaSourceURL.className === '') {
+                var url = "http://localhost:8866/" + playbackURL;
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.onload = function (e) {
+                    var mediaDataSource = JSON.parse(xhr.response);
+                    player_load_mds(mediaDataSource);
+                }
+                xhr.send();
+            
+            } else {
+            */
+
+                var i;
+                var mediaDataSource = {
+                    type: 'mse'
+                };
+                mediaDataSource['url'] = "http://localhost:8866/" +playbackURL;
+                mediaDataSource['isLive'] = true;
+                mediaDataSource['liveBufferLatencyChasing'] = false;
+                mediaDataSource['withCredentials'] = false;
+                console.log('MediaDataSource', mediaDataSource);
+                player_load_mds(mediaDataSource);
+            //}
+        }
+
+        function loading_complete() {
+            console.log('loading complete');
+
+            var element = document.getElementsByName('videoElement')[0];
+            if (typeof player !== "undefined") {
+                if (player != null) {
+                    //player.muted = true;
+                }
+            }
+
+            play();
+
+            //player.muted = false;
+        }        
+
+        function player_load_mds(mediaDataSource) {
+            var element = document.getElementsByName('videoElement')[0];
+            if (typeof player !== "undefined") {
+                if (player != null) {
+                    player.unload();
+                    player.detachMediaElement();
+                    player.destroy();
+                    player = null;
+                }
+            }
+            player = mpegts.createPlayer(mediaDataSource, {
+                enableWorker: true,
+                lazyLoadMaxDuration: 3 * 60,
+                seekType: 'range',
+                liveBufferLatencyChasing: false,
+            });
+            player.on(mpegts.Events.MEDIA_INFO, loading_complete);
+            player.attachMediaElement(element);
+            player.load();
+            //player.play();
+        }
+
+        function stop() {
+            if (stopURL != null) {
+                var player = document.getElementById('video_1');
+                player.stop();
+                //player.reset();
+                clearInterval(leaseTimer);
+                /*
+                $.getJSON(stopURL, function (result) {
+                    console.log("stopped");
+                }); */            
+            }
+        }
+
+        $(window).resize(function () {
+            resizePlayer();
+        });
+
+        function startPlayback(streamURL) {
+            console.log("requesting: " + streamURL);
+
+            if (vod_id != null) {
+                var video = document.getElementById('video_1');
+                var hls = new Hls();
+                hls.loadSource(streamURL);
+                hls.attachMedia(video);
+                hls.recoverMediaError();
+                hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                    checkAutoPlay(video.play());
+                    $("#statusMessage").text("");
+                });
+                hls.on(Hls.Events.STREAM_STATE_TRANSITION, function (data) {
+                    console.log("STREAM_STATE_TRANSITION " + data);
+                });
+                hls.on(Hls.Events.ERROR, function (data) {
+                    console.log("ERROR " + data);
+                });
+                return;
+            }
+
+
+            if (streamURL.startsWith("live?f=") || streamURL.startsWith("http://")) {
+                var video = document.getElementById('video_1');
+                video.src = streamURL;
+                video.addEventListener('canplay', function () {
+                    checkAutoPlay(video.play());
+                });
+            } else if (Hls.isSupported()) {
+                var video = document.getElementById('video_1');
+                var hls = new Hls();
+                hls.loadSource(streamURL);
+                hls.attachMedia(video);
+                hls.recoverMediaError();
+                hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                    checkAutoPlay(video.play());
+
+                    if (startSeconds != 0) {
+                        video.currentTime = startSeconds;
+                        startSeconds = 0;
+                    }
+                });
+                hls.on(Hls.Events.STREAM_STATE_TRANSITION, function (data) {
+                    //console.log("STREAM_STATE_TRANSITION " + data);
+                });
+                hls.on(Hls.Events.ERROR, function (data) {
+                    //console.log("ERROR " + data);
+                });
+
+                //Object.keys(Hls.Events).forEach(function (e) {
+                //    hls.on(Hls.Events[e], console.info.bind(console));
+                //});
+
+            }
+            // hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
+            // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element throught the `src` property.
+            // This is using the built-in support of the plain video element, without using hls.js.
+            else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                var video = document.getElementById('video_1');
+                video.src = streamURL;
+                video.addEventListener('canplay', function () {
+                    checkAutoPlay(video.play());
+                });
+            }
+
+            //checkAutoPlay(player.play());
+            console.log("playing");
+
+            $("#statusMessage").text("");
+            $("#statusMessage").addClass("text-danger");
+
+            $("#controls").show();
+            $("#metadata").show();
+        };
+
+        $(window).on('unload', function () {
+            if (stopURL != null) {
+                var i = new Image(1, 1);
+                i.src = stopURL;
+                console.log("transcoder stopped");
+            }
+
+            storeLastPlaybackPosition();
+        });
+
+
+
+        function storeLastPlaybackPosition() {
+            if (getParameterByName("recording_id", null) != null) {
+                if (lastPosition > 15) {
+                    var positionURL = "service?method=recording.watched.set&recording_id=" + getParameterByName("recording_id", null) + "&position=" + lastPosition;
+                    var i = new Image(1, 1);
+                    i.src = positionURL;
+                    console.log("last watched: " + lastPosition);
+                }
+                lastPosition = 0;
+            }
+        }
+
+
+        function fullscreenStatus(currentlyFullscreen) {
+            if (currentlyFullscreen == false) {
+                fullscreen = false;
+                $('.nplayer-fullscreen').html('<i class="fa fa-expand fa-2x"></i>');
+            }
+        }
+
+        function display(seconds) {
+            const hours = seconds / 3600;
+            const minutes = (seconds % 3600) / 60;
+            seconds %= 60;
+            return [hours, minutes, seconds].map(format).join(':');
+        }
+
+        function format(val) {
+            return ('0' + Math.floor(val)).slice(-2)
+        }
+
+        function pause() {
+            paused = true;
+            var player = document.getElementById('video_1');
+            player.pause();
+            $('.nplayer-play-pause').html('<i class="fa fa-play fa-2x"></i>');
+
+
+            var timeRangesObject = player.seekable;
+            var timeRanges = [];
+            //Go through the object and output an array
+            for (let count = 0; count < timeRangesObject.length; count++) {
+                timeRanges.push([timeRangesObject.start(count), timeRangesObject.end(count)]);
+            }
+        }
+
+        function play() {
+            paused = false;
+            var player = document.getElementById('video_1');
+            if (liveMode) {
+                var secondsBackFromLive = player.duration - player.currentTime;
+                if (secondsBackFromLive > slipSeconds) {
+                    var seekTo = player.duration - slipSeconds;
+                    if (seekTo < 0) {
+                        seekTo = 0;
+                    }
+                    //player.currentTime = seekTo;
+                }
+            }
+            player.play();
+            $('.nplayer-play-pause').html('<i class="fa fa-pause fa-2x"></i>');
+        }
+
+        function skipBack() {
+            console.log("skipBack");
+            if (liveMode == false) {
+                pause();
+                var player = document.getElementById('video_1');
+                var time = ((player.currentTime + startSeconds) - 60);
+                if (time < 0)
+                    time = 0;
+                startSeconds = time;
+                start();
+            }
+        }
+
+        function skipForward() {
+            console.log("skipForward");
+
+            if (liveMode == false) {
+                pause();
+                var player = document.getElementById('video_1');
+                var time = ((player.currentTime + startSeconds) + 60);
+                if (time > durationSeconds)
+                    time = durationSeconds - 5;
+                startSeconds = time;
+                start();
+            }
+        }
+
+        function togglePause() {
+            console.log("togglePause");
+            //if (paused) {
+                play();
+            //} else {
+            //    pause();
+            //}
+        }
+
+        function toggleVolume() {
+            console.log("toggleVolume");
+
+            var player = document.getElementById('video_1');
+            if (muted) {
+                muted = false;
+                player.muted = false;
+                $('.nplayer-volume').html('<i class="fa fa-volume-up fa-2x"></i>');
+            } else {
+                muted = true;
+                player.muted = true;
+                $('.nplayer-volume').html('<i class="fa fa-volume-mute fa-2x"></i>');
+            }
+        }
+
+        function toggleFullscreen() {
+            console.log("toggleFullscreen");
+            var videoContainer = document.getElementById('video_container');
+            if (fullscreen) {
+                fullscreen = false;
+
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                    document.msExitFullscreen();
+                }
+
+                $('.nplayer-fullscreen').html('<i class="fa fa-expand fa-2x"></i>');
+
+                resizePlayer();
+            } else {
+                fullscreen = true;
+                //videoContainer.requestFullscreen();
+
+                if (videoContainer.requestFullscreen) {
+                    videoContainer.requestFullscreen();
+                } else if (videoContainer.mozRequestFullScreen) { /* Firefox */
+                    videoContainer.mozRequestFullScreen();
+                } else if (videoContainer.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+                    videoContainer.webkitRequestFullscreen();
+                } else if (videoContainer.msRequestFullscreen) { /* IE/Edge */
+                    videoContainer.msRequestFullscreen();
+                }
+
+                $('.nplayer-fullscreen').html('<i class="fa fa-compress fa-2x"></i>');
+
+                resizePlayer();
+            }
+        }
+
+        function viewSettings() {
+            console.log("viewSettings");
+
+            var position = 0;
+            var url = 'services/service?method=channel.transcode.options&format=json&pos=' + position;
+            if (getParameterByName("recording_id", null) != null) {
+                url = 'services/service?method=recording.transcode.options&format=json&pos=' + position;
+            }
+            $.get(url, function (data) {
+                var profile = data.profile;
+                // populate audio stream options
+                $("#audioStream").empty();
+                for (var audioIndex in data.audioStreams) {
+                    var audioStream = data.audioStreams[audioIndex];
+                    $("#audioStream").append("<option value='" + audioIndex + "'>" + audioStream + "</option>");
+                }
+
+                // populate subtitle stream options
+                $("#subtitleStream").empty();
+                for (var subtitleIndex in data.subtitleStreams) {
+                    var subtitleStream = data.subtitleStreams[subtitleIndex];
+                    $("#subtitleStream").append("<option value='" + subtitleIndex + "'>" + subtitleStream + "</option>");
+                }
+
+                // show popup
+                $('#StreamSettingsModal').modal('show');
+            });
+        }
+
+        // update player controls
+        function updateControls() {
+            /*
+            var player = videojs('video_1');
+            */
+            if (liveMode) {
+                var player = document.getElementById('video_1');
+                //console.log("duration: " + player.duration + "  position: " + player.currentTime);
+
+                // update seconds-behind
+                //$("#current-time").text("-00:00:00");
+
+                // update current-time
+                var d = new Date(), e = new Date(d);
+                var seconds = (e - d.setHours(0, 0, 0, 0)) / 1000;
+                var currentTime = display(seconds);
+                $("#total-time").text(currentTime);
+
+
+                var secondsSinceStreamStart = (((new Date()).getTime() - streamStartTime.getTime()) / 1000);
+                var availableSeconds = secondsSinceStreamStart;
+                if (availableSeconds > slipSeconds)
+                    availableSeconds = slipSeconds;
+                //console.log("availableSeconds: " + availableSeconds);
+
+                // position scrubber
+                var duration = player.duration;
+                var position = player.currentTime;
+                if (isNaN(duration)) {
+                    $("#current-time").text("-00:00:00");
+                } else {
+                    // handle faster than real-time stream (like IPTV with large buffer)
+                    if (duration > (secondsSinceStreamStart + 5)) {
+                        var diff = (duration - secondsSinceStreamStart);
+                        console.log("secondsSinceStreamStart=" + secondsSinceStreamStart + " but duration is " + duration);
+                        // fix up start time to approximate
+                        streamStartTime.setSeconds(streamStartTime.getSeconds() - diff);
+                    }
+                    // update timeline available buffer
+                    var width = $('.nplayer-timeline').width();
+                    var startingX = $('.nplayer-timeline').position().left;
+                    var left = width - ((width / slipSeconds) * availableSeconds);
+                    $('.nplayer-timeline-played').css({
+                        left: (left + startingX),
+                        width: (width - left)
+                    });
+
+                    // work out how far back from the live point we are
+                    var secondsBackFromLive = secondsSinceStreamStart - position;
+                    if (liveSeekSecondsBackFromLive != -1)
+                        secondsBackFromLive = liveSeekSecondsBackFromLive;
+                    if (secondsBackFromLive < 0) {
+                        secondsBackFromLive = 0;
+                    }
+                    if (secondsBackFromLive > slipSeconds) {
+                        secondsBackFromLive = slipSeconds;
+                    }
+                    var scrubberX = ((width / slipSeconds) * (slipSeconds - secondsBackFromLive));
+                    $('.nplayer-timeline-scrubber').css({
+                        left: ((scrubberX + startingX) - 5)
+                    });
+
+                    //console.log("seconds before live: " + secondsBackFromLive + " (duration=" + duration + ", position=" + position + ")");
+
+                    $("#current-time").text("-" + display(secondsBackFromLive));
+                }
+
+            } else {
+                // set duration (right side of timeline)
+                var duration = display(durationSeconds);
+                $("#total-time").text(duration);
+
+                // set current time (left side of timeline)
+                var player = document.getElementById('video_1');
+                var time = player.currentTime + startSeconds;
+                if (time > duration)
+                    time = duration;
+                var position = display(time);
+                $("#current-time").text(position);
+
+                lastPosition = Math.trunc(time);
+
+                if (nativelyStreamable) {
+                    durationSeconds = player.duration;
+                }
+
+
+                // update timeline
+                var duration = durationSeconds;
+                var width = $('.nplayer-timeline').width();
+                var startingX = $('.nplayer-timeline').position().left;
+                var percentage = ((100 / duration) * time);
+                if (percentage > 100) {
+                    percentage = 100;
+                }
+                var left = startingX + ((width / 100.0) * percentage);
+                if (left == 0) {
+                    left = startingX;
+                }
+                $('.nplayer-timeline-scrubber').css({
+                    left: left
+                });
+                $('.nplayer-timeline-played').css({
+                    left: startingX,
+                    width: (left - startingX)
+                });
+
+                if (duration > 1) {
+                    if ((time + 1) >= duration) {
+                        console.log("end of stream");
+                        stop();
+                        history.go(-1);
+                    }
+                }
+            }
+
+            document.title = $('#title').text();
+
+            // fade out controls
+            if (hideTime != 0) {
+                if (hideTime < Date.now()) {
+                    if ($(".nplayer-controls").is(":hover") == false) {
+                        $(".nplayer-controls").fadeOut();
+                        $(".nplayer-metadata").fadeOut();
+
+                        var offsets = $('#liveChannels').offset();
+                        var left = offsets.left;
+                        if ((mouseLocation.x + 50) < left) {
+                            $(".nplayer-channels").fadeOut();
+                            console.log("hiding channels div. (" + mouseLocation.x + " vs " + left + ")");
+                        }
+
+                        controlsHidden = true;
+                        hideTime = 0;
+                    }
+                }
+            }
+        }
+
+        // resize player to fill container
+        function resizePlayer() {
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+            var maxWidth = (((height - 100) / 9) * 16);
+            if (fullscreen) {
+                maxWidth = ((height / 9) * 16);
+            }
+            $(".container").css("max-width", maxWidth + "px");
+
+            var width = $("#video_container").width();
+            $("#video_1").width(width);
+            $("#video_1").height(width * aspectRatio);
+        }
+
+        // regular lease renewals
+        function renewLease() {
+            $.get(leaseURL, function (data) {
+                console.log("lease renewed");
+            });
+        }
+
+        // check status of the transcode, to see if we're ready to start playback
+        function checkStatus() {
+
+            console.log("good to go");            
+            clearInterval(statusTimer);
+            $("#statusMessage").text("");            
+
+            // configure the appropriate navigation behaviour
+            setupNavigation();
+
+            // start playback
+            startPlayback(playbackURL);
+
+            renewLease();
+
+            // start regular lease renewals
+            leaseTimer = self.setInterval(renewLease, 5000);
+            if (result.speed != 0 && result.speed < 1.0) {
+                $("#statusMessage").addClass("text-danger");
+                $("#statusMessage").text("Server is not fast enough for playback in a web browser. (" + result.speed + "x)");
+            }
+            hideTime = Date.now() + 2500;
+            streamStartTime = new Date();
+            /*
+            $.ajax({
+                type: "get", url: statusURL,
+                success: function (result, text) {
+                    console.log(result.status);
+                    $("#statusMessage").text(result.status);
+                    if (result.final && result.percentage == 100) {
+                        console.log("good to go");
+                        durationSeconds = result.duration;
+                        clearInterval(statusTimer);
+                        $("#statusMessage").text("");
+                        if (result.hasOwnProperty("streamable")) {
+                            nativelyStreamable = true;
+                        }
+
+                        // configure the appropriate navigation behaviour
+                        setupNavigation();
+
+                        // start playback
+                        startPlayback(playbackURL);
+
+                        renewLease();
+
+                        // start regular lease renewals
+                        leaseTimer = self.setInterval(renewLease, 5000);
+                        if (result.speed != 0 && result.speed < 1.0) {
+                            $("#statusMessage").addClass("text-danger");
+                            $("#statusMessage").text("Server is not fast enough for playback in a web browser. (" + result.speed + "x)");
+                        }
+                        hideTime = Date.now() + 2500;
+                        streamStartTime = new Date();
+                    }
+                    if (result.final && result.percentage < 100) {
+                        $("#statusMessage").addClass("text-danger");
+                        clearInterval(statusTimer);
+                    }
+                },
+                error: function (request, status, error) {
+                    console.log("Unexpected error checking channel status. Stopping stream.")
+                    clearInterval(statusTimer);
+                    stop();
+                    history.go(-1);
+                }
+            });*/
+        }
+
+
+        function posterLoadError(image) {
+            image.onerror = "";
+            image.src = "placeholder-poster.jpg";
+            return true;
+        }
+
+    </script>
+</body>
+</html>

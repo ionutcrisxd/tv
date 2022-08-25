@@ -1,0 +1,54 @@
+﻿[
+  {
+    "question": "What is NextPVR?",
+    "answer": "<p>NextPVR is a personal video recorder application for Microsoft Windows, making it easy to watch or record live TV, and provides great features like series recordings, web scheduling, playing music, video and image files, iPhone/iPad client application, Kodi/Emby integration etc.</p><p>NextPVR is free for personal, non-commercial use. <span class=\"text-light\">Commercial use requires a license.</span></p>"
+  },
+  {
+    "question": "Is there any documentation available?",
+    "answer": "Yes, you can find documentation on the wiki at https://github.com/sub3/NextPVR/wiki"
+  },
+  {
+    "question": "How do I setup NextPVR?",
+    "answer": "At it's most basic setup, you'd head to the Settings->Devices page, click on your device to setup your channels. Also review the Settings->General page to set the location for your recordings and live tv buffer files. Take a look at the wiki for more information: <a href='https://github.com/sub3/NextPVR/wiki/Setup-Main'>https://github.com/sub3/NextPVR/wiki/Setup-Main</a>"
+  },
+  {
+    "question": "What devices does NextPVR support?",
+    "answer": "<p>This version of NextPVR is able to run on multiple platform. The devices supported vary depending on what platform the backend software is running on.</p><p>On <span class=\"text-dark\">Windows</span> it supports IPTV, HDHomeRun, SAT>IP, digital tuners (DVB/ATSC/QAM), and HDMI/Component devices such as the Hauppauge HDPVR family of devices. It also supports SAT>IP devices</p><p>On <span class=\"text-dark\">Linux</span> it supports IPTV, HDHomeRun, SAT>IP, digital tuners (DVB/ATSC/ISDBT/DMBT) that have kernel drivers available</p><p>On <span class=\"text-dark\">macOS</span> it supports IPTV, HDHomeRun, and SAT>IP tuners</p>"
+  },
+  {
+    "question": "How can I watch my recordings and live TV?",
+    "answer": "<p>If NextPVR is running on a typical modern machine, you'll be able to view the streams right here in the web app. If you're running on a slower machine, which isn't powerful enough to transcode video for playing in a web app, you may need to view your content in another client.</p><p>Other options include watching content in our Android or iOS applications (hint: turning on 'directplay' in these apps is better when you have a slow backend).</p><p>If you're running on Windows, you can watch your content in NextPVR.exe.</p><p>You can also watch in alternative clients like nlite, Kodi, or XNEWA.</p><p>See <a href='http://nextpvr.com/download.html'>http://nextpvr.com/download.html</a> for more information.</p>"
+  },
+  {
+    "question": "I'm about to post a support question, and would like to supply my log files. Where are they?",
+    "answer": "Head to the Settings->About page, and click the 'Log Files' button. The application will zip up you log files and send them to you."
+  },
+  {
+    "question": "What is a timeslot recording?",
+    "answer": "When you schedule a daily/weekly timeslot recording, it'll look to record that show at about that time each day/week. To allow for slight variances to the schedule it'll first look for a show at the exact time, but if that cant be found it'll also look for shows with the same name +/- 90 minutes of the original start time. It does this to automagically cope with scenarios like a show being moved to a later time, or running late to because of some other show."
+  },
+  {
+    "question": "NextPVR seems to allow me to schedule more shows to record simultaneously than the number of tuners I have. Is something wrong?",
+    "answer": "Nothing is wrong. Some types of tuners, such as digital tuners used for DVB and ATSC, can tune more than one channel at a time if the channels are on the same frequency. NextPVR can take advantage of this to record multiple channels with a single tuner."
+  },
+  {
+    "question": "What does the 'Auto Merge' button do?",
+    "answer": "When you receive your channels from multiple sources, such as DVB-T and DVB-S, you'll some times end up with multiple separate copies of the same channel. Selecting 'Auto Merge' will merge these into one channel, available from multiple sources, which can help the scheduler make better use of the available tuner resources."
+  },
+  {
+    "question": "What does the 'Auto Map' button do?",
+    "answer": "The Auto Map button is used to bulk map channels of selected type, to a selected EPG source. For example, you might want to map all your 'HDHR' channels to a specific XMLTV file. In the auto mapping process NextPVR will look at channel names and/or channel numbers to try to perform this mapping automagically for the user."
+  },
+  {
+    "question": "My tuner isn't supported. Am I out of luck?",
+    "answer": "It's still fairly early days for NextPVR v5. We've added support for the most commonly used tuner types. There is a few other tuner types we haven't got to yet, but we're hoping to add support for more over the coming weeks/months. At the very least, it's worth asking about it on the NextPVR forums, and we can confirm whether your tuner is already supported or on the todo list.<br/><br/>NextPVR also has a feature called 'Extras', which allows users to easily connect other types of tuners. For more information on how this works, see the documentation on the wiki."
+  },
+  {
+    "question": "I've got ideas for new features - who can I tell?",
+    "answer": "Head over to the NextPVR forum and let us know (<a href='http://forums.nextpvr.com'>http://forums.nextpvr.com</a>). If it's a good idea, there is a good chance we can add it in a future build."
+  },
+  {
+    "question": "Where can I get more help?",
+    "answer": "You first port of call should be the community forums at <a href='https://forums.nextpvr.com/'>https://forums.nextpvr.com/</a> - we're a friendly bunch, with a lot of smart people available to help you out. Alternatively you can use the 'Contact' button on our <a href='https://nextpvr.com'>https://nextpvr.com</a> website."
+  }
+]
